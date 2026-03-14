@@ -80,7 +80,7 @@ function normalizeState() {
       duration: Number(e.duration) || 30
     }));
 
-  if (!['serious','ocean','sunset','forest','lavender','contrast'].includes(state.theme)) {
+  if (!['serious','ocean','sunset','forest','lavender','neon','candy','contrast'].includes(state.theme)) {
     state.theme = 'serious';
   }
 
