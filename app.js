@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'calendar_multi_tabs_v2';
+const STORAGE_KEY = 'calendar_multi_tabs_v3';
 const LEGACY_KEYS = ['calendar_multi_tabs_v1'];
 const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const weekdayNames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -11,7 +11,8 @@ const defaultState = {
     { id: safeId(), name: 'Richard', color: 'tone-1' },
     { id: safeId(), name: 'Margot', color: 'tone-2' }
   ],
-  events: []
+  events: [],
+  theme: 'serious'
 };
 
 let state = loadState();
@@ -24,6 +25,7 @@ const appointmentForm = document.getElementById('appointmentForm');
 const personDialog = document.getElementById('personDialog');
 const personForm = document.getElementById('personForm');
 const deleteEventBtn = document.getElementById('deleteEventBtn');
+const themeSelect = document.getElementById('themeSelect');
 
 init();
 
@@ -78,6 +80,10 @@ function normalizeState() {
       duration: Number(e.duration) || 30
     }));
 
+  if (!['serious','ocean','sunset','forest','lavender','contrast'].includes(state.theme)) {
+    state.theme = 'serious';
+  }
+
   if (state.activeTab !== 'all' && !validIds.has(state.activeTab)) {
     state.activeTab = 'all';
   }
@@ -115,6 +121,14 @@ function bindGlobalActions() {
     state.currentDate = new Date().toISOString().slice(0, 10);
     render();
   });
+  themeSelect.value = state.theme || 'serious';
+  applyTheme(state.theme || 'serious');
+  themeSelect.addEventListener('change', () => {
+    state.theme = themeSelect.value;
+    saveState();
+    applyTheme(state.theme);
+  });
+
   document.getElementById('addPersonBtn').addEventListener('click', () => {
     document.getElementById('personName').value = '';
     personDialog.showModal();
@@ -150,6 +164,11 @@ function bindGlobalActions() {
 
 function nextColor() {
   return personPalette[state.people.length % personPalette.length];
+}
+
+
+function applyTheme(themeName) {
+  document.documentElement.setAttribute('data-theme', themeName || 'serious');
 }
 
 function shiftMonth(delta) {

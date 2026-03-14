@@ -1,4 +1,6 @@
-:root {
+ :root {
+  --bg-start: #020617;
+  --bg-end: #0f172a;
   --bg: #0f172a;
   --panel: #111827;
   --panel-2: #1f2937;
@@ -12,11 +14,96 @@
   --shadow: 0 10px 30px rgba(0,0,0,.25);
   --radius: 18px;
 }
+
+:root[data-theme="serious"] {
+  --bg-start: #020617;
+  --bg-end: #0f172a;
+  --panel: #111827;
+  --panel-2: #1f2937;
+  --panel-3: #0b1220;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --line: rgba(148, 163, 184, 0.18);
+  --accent: #38bdf8;
+  --accent-2: #22c55e;
+  --danger: #ef4444;
+}
+
+:root[data-theme="ocean"] {
+  --bg-start: #031525;
+  --bg-end: #0b3a53;
+  --panel: #082032;
+  --panel-2: #0b2740;
+  --panel-3: #051522;
+  --text: #e8f7ff;
+  --muted: #9fd3e6;
+  --line: rgba(125, 211, 252, 0.22);
+  --accent: #22d3ee;
+  --accent-2: #06b6d4;
+  --danger: #fb7185;
+}
+
+:root[data-theme="sunset"] {
+  --bg-start: #1a0d0a;
+  --bg-end: #4a1d14;
+  --panel: #2b1612;
+  --panel-2: #402018;
+  --panel-3: #1b0f0d;
+  --text: #fff2ea;
+  --muted: #f7c7ae;
+  --line: rgba(251, 146, 60, 0.22);
+  --accent: #fb7185;
+  --accent-2: #f59e0b;
+  --danger: #ef4444;
+}
+
+:root[data-theme="forest"] {
+  --bg-start: #07130c;
+  --bg-end: #163524;
+  --panel: #0e1d15;
+  --panel-2: #173125;
+  --panel-3: #0a1510;
+  --text: #eefcf3;
+  --muted: #afd6bd;
+  --line: rgba(74, 222, 128, 0.18);
+  --accent: #4ade80;
+  --accent-2: #22c55e;
+  --danger: #f87171;
+}
+
+:root[data-theme="lavender"] {
+  --bg-start: #12091d;
+  --bg-end: #31204d;
+  --panel: #1d1330;
+  --panel-2: #2a1c42;
+  --panel-3: #130d22;
+  --text: #f7f0ff;
+  --muted: #d7c1f3;
+  --line: rgba(196, 181, 253, 0.2);
+  --accent: #a78bfa;
+  --accent-2: #f472b6;
+  --danger: #fb7185;
+}
+
+:root[data-theme="contrast"] {
+  --bg-start: #000000;
+  --bg-end: #1a1a1a;
+  --panel: #0a0a0a;
+  --panel-2: #1a1a1a;
+  --panel-3: #050505;
+  --text: #ffffff;
+  --muted: #d1d5db;
+  --line: rgba(255, 255, 255, 0.18);
+  --accent: #facc15;
+  --accent-2: #ffffff;
+  --danger: #fb7185;
+}
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
   color: var(--text);
 }
 button, input, select, textarea { font: inherit; }
@@ -41,6 +128,34 @@ button, input, select, textarea { font: inherit; }
 }
 .topbar h1 { margin: 0 0 6px; font-size: 1.8rem; }
 .topbar p, .view-title-row p, .agenda-head p { margin: 0; color: var(--muted); }
+
+.theme-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #0b1220;
+}
+
+.theme-picker-wrap span {
+  white-space: nowrap;
+}
+
+.theme-select {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  min-width: 120px;
+}
+
+.theme-select option {
+  color: #111827;
+}
+
 .topbar-actions, .month-nav, .toolbar-right, .modal-actions { display: flex; gap: 12px; align-items: center; }
 .tabs-bar {
   margin-top: 16px;
@@ -58,7 +173,7 @@ button, input, select, textarea { font: inherit; }
   cursor: pointer;
   white-space: nowrap;
 }
-.tab-btn.active { background: linear-gradient(135deg, #0ea5e9, #22c55e); color: white; border-color: transparent; }
+.tab-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border-color: transparent; }
 .toolbar {
   margin-top: 16px;
   padding: 16px 18px;
@@ -83,7 +198,7 @@ button, input, select, textarea { font: inherit; }
   padding: 11px 15px;
   border-radius: 12px;
 }
-.primary-btn { background: linear-gradient(135deg, #0ea5e9, #22c55e); color: white; }
+.primary-btn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; }
 .ghost-btn { background: #0b1220; color: var(--text); border: 1px solid var(--line); }
 .danger-btn { background: rgba(239, 68, 68, 0.14); color: #fecaca; border: 1px solid rgba(239,68,68,.25); }
 .calendar-shell {
@@ -206,6 +321,8 @@ button, input, select, textarea { font: inherit; }
 
 @media (max-width: 900px) {
   .topbar, .toolbar, .agenda-head { flex-direction: column; align-items: stretch; }
+  .topbar-actions { flex-wrap: wrap; }
+  .theme-picker-wrap { width: 100%; justify-content: space-between; }
   .month-nav { justify-content: space-between; }
   .search-wrap { flex-direction: column; align-items: stretch; }
   .search-wrap input { width: 100%; }
