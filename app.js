@@ -176,7 +176,7 @@ const themeMeta = {
   neon: { badge: 'Néon cyber', title: 'Console futuriste', subtitle: 'Contraste radical, grille cyber et accent fluorescent.' },
   candy: { badge: 'Candy fun', title: 'Calendrier pop', subtitle: 'Palette gourmande et look ludique très affirmé.' },
   contrast: { badge: 'Ultra contraste', title: 'Mode impact', subtitle: 'Lisibilité maximale avec noir profond et jaune vif.' },
-  arcade: { badge: 'Arcade rétro', title: 'Salle d'arcade', subtitle: 'Esprit pixel, néons vintage et énergie jeu vidéo.' },
+  arcade: { badge: 'Arcade rétro', title: "Salle d'arcade", subtitle: 'Esprit pixel, néons vintage et énergie jeu vidéo.' },
   paper: { badge: 'Agenda papier', title: 'Carnet de rendez-vous', subtitle: 'Texture claire, style carnet et repères manuscrits.' },
   gold: { badge: 'Luxe noir or', title: 'Edition prestige', subtitle: 'Noir satiné, reflets dorés et rendu haut de gamme.' },
   galaxy: { badge: 'Galaxie', title: 'Constellation des RDV', subtitle: 'Nébuleuses, étoiles et profondeur spatiale.' }
