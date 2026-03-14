@@ -80,7 +80,7 @@ function normalizeState() {
       duration: Number(e.duration) || 30
     }));
 
-  if (!['serious','ocean','sunset','forest','lavender','neon','candy','contrast'].includes(state.theme)) {
+  if (!['serious','ocean','sunset','forest','lavender','neon','candy','contrast','arcade','paper','gold','galaxy'].includes(state.theme)) {
     state.theme = 'serious';
   }
 
@@ -167,8 +167,31 @@ function nextColor() {
 }
 
 
+const themeMeta = {
+  serious: { badge: 'Sérieuse', title: 'Calendrier partagé', subtitle: 'Vue claire, professionnelle et équilibrée.' },
+  ocean: { badge: 'Océan profond', title: 'Marée des rendez-vous', subtitle: 'Une ambiance marine lumineuse avec relief aquatique.' },
+  sunset: { badge: 'Sunset pop', title: 'Fin de journée éclatante', subtitle: 'Couleurs chaudes, énergie forte et contraste solaire.' },
+  forest: { badge: 'Jungle', title: 'Canopée organisée', subtitle: 'Un style végétal dense et vivant pour une vue organique.' },
+  lavender: { badge: 'Royal violet', title: 'Agenda impérial', subtitle: 'Une lecture premium avec halo violet et éclats célestes.' },
+  neon: { badge: 'Néon cyber', title: 'Console futuriste', subtitle: 'Contraste radical, grille cyber et accent fluorescent.' },
+  candy: { badge: 'Candy fun', title: 'Calendrier pop', subtitle: 'Palette gourmande et look ludique très affirmé.' },
+  contrast: { badge: 'Ultra contraste', title: 'Mode impact', subtitle: 'Lisibilité maximale avec noir profond et jaune vif.' },
+  arcade: { badge: 'Arcade rétro', title: 'Salle d'arcade', subtitle: 'Esprit pixel, néons vintage et énergie jeu vidéo.' },
+  paper: { badge: 'Agenda papier', title: 'Carnet de rendez-vous', subtitle: 'Texture claire, style carnet et repères manuscrits.' },
+  gold: { badge: 'Luxe noir or', title: 'Edition prestige', subtitle: 'Noir satiné, reflets dorés et rendu haut de gamme.' },
+  galaxy: { badge: 'Galaxie', title: 'Constellation des RDV', subtitle: 'Nébuleuses, étoiles et profondeur spatiale.' }
+};
+
 function applyTheme(themeName) {
-  document.documentElement.setAttribute('data-theme', themeName || 'serious');
+  const theme = themeName || 'serious';
+  document.documentElement.setAttribute('data-theme', theme);
+  const meta = themeMeta[theme] || themeMeta.serious;
+  const badge = document.getElementById('themeBadge');
+  const title = document.getElementById('heroTitle');
+  const subtitle = document.getElementById('heroSubtitle');
+  if (badge) badge.textContent = meta.badge;
+  if (title) title.textContent = meta.title;
+  if (subtitle) subtitle.textContent = meta.subtitle;
 }
 
 function shiftMonth(delta) {

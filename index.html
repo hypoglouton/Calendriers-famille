@@ -13,8 +13,11 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <h1>Calendrier partagé</h1>
-        <p>Un onglet par personne + une vue consolidée de tous les rendez-vous.</p>
+        <div class="hero-title-wrap">
+          <div class="hero-kicker" id="themeBadge">Sérieuse</div>
+          <h1 id="heroTitle">Calendrier partagé</h1>
+          <p id="heroSubtitle">Un onglet par personne + une vue consolidée de tous les rendez-vous.</p>
+        </div>
       </div>
       <div class="topbar-actions">
         <label class="theme-picker-wrap" for="themeSelect">
@@ -28,6 +31,10 @@
             <option value="neon">Néon cyber</option>
             <option value="candy">Candy fun</option>
             <option value="contrast">Ultra contraste</option>
+            <option value="arcade">Arcade rétro</option>
+            <option value="paper">Agenda papier</option>
+            <option value="gold">Luxe noir or</option>
+            <option value="galaxy">Galaxie</option>
           </select>
         </label>
         <button id="todayBtn" class="ghost-btn">Aujourd'hui</button>
