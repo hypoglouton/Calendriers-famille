@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendrier multi-onglets</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Calendrier partagé</h1>
+        <p>Un onglet par personne + une vue consolidée de tous les rendez-vous.</p>
+      </div>
+      <div class="topbar-actions">
+        <button id="todayBtn" class="ghost-btn">Aujourd'hui</button>
+        <button id="addPersonBtn" class="primary-btn">+ Nouvel onglet</button>
+      </div>
+    </header>
+
+    <nav class="tabs-bar" id="tabsBar"></nav>
+
+    <section class="toolbar">
+      <div class="month-nav">
+        <button id="prevMonthBtn" class="ghost-btn">← Précédent</button>
+        <div id="currentMonthLabel" class="month-label"></div>
+        <button id="nextMonthBtn" class="ghost-btn">Suivant →</button>
+      </div>
+      <div class="toolbar-right">
+        <label class="search-wrap">
+          <span>Recherche</span>
+          <input id="searchInput" type="text" placeholder="Titre, personne, lieu..." />
+        </label>
+      </div>
+    </section>
+
+    <main id="viewRoot"></main>
+  </div>
+
+  <dialog id="appointmentDialog" class="modal">
+    <form method="dialog" id="appointmentForm">
+      <h2 id="dialogTitle">Ajouter un rendez-vous</h2>
+      <input type="hidden" id="eventId" />
+      <input type="hidden" id="eventOwnerId" />
+      <input type="hidden" id="eventDate" />
+
+      <label>
+        <span>Titre</span>
+        <input id="eventLabel" required maxlength="120" placeholder="Ex. Médecin, réunion, sport" />
+      </label>
+
+      <div class="form-row two-cols">
+        <label>
+          <span>Heure</span>
+          <input id="eventTime" type="time" required />
+        </label>
+        <label>
+          <span>Durée</span>
+          <select id="eventDuration">
+            <option value="15">15 min</option>
+            <option value="30" selected>30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">1 h</option>
+            <option value="90">1 h 30</option>
+            <option value="120">2 h</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        <span>Lieu</span>
+        <input id="eventLocation" maxlength="120" placeholder="Optionnel" />
+      </label>
+
+      <label>
+        <span>Notes</span>
+        <textarea id="eventNotes" rows="3" maxlength="300" placeholder="Optionnel"></textarea>
+      </label>
+
+      <menu class="modal-actions">
+        <button type="button" id="deleteEventBtn" class="danger-btn hidden">Supprimer</button>
+        <div class="spacer"></div>
+        <button value="cancel" class="ghost-btn">Annuler</button>
+        <button value="default" id="saveEventBtn" class="primary-btn">Enregistrer</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="personDialog" class="modal small-modal">
+    <form method="dialog" id="personForm">
+      <h2>Créer un onglet personne</h2>
+      <label>
+        <span>Nom</span>
+        <input id="personName" required maxlength="60" placeholder="Ex. Richard, Margot, Studio A" />
+      </label>
+      <menu class="modal-actions">
+        <div class="spacer"></div>
+        <button value="cancel" class="ghost-btn">Annuler</button>
+        <button value="default" class="primary-btn">Créer</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
