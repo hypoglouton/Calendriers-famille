@@ -6,19 +6,29 @@
 <title>Calendrier partagé</title>
 <style>
 :root{
+  --glass:rgba(255,255,255,.09);
+  --glass-strong:rgba(255,255,255,.16);
+  --glass-line:rgba(255,255,255,.18);
   --bg:#071226;--panel:#0d1a31cc;--panel-solid:#0d1a31;--panel-2:#10203c;--text:#eef4ff;--muted:#a6b4d0;
   --line:#24426d;--accent:#40d8d0;--accent-2:#34d16f;--shadow:0 20px 50px rgba(0,0,0,.28);
   --chip:#19345d;--chip-text:#f5fbff;--danger:#ff6677;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 20% 20%,rgba(52,216,208,.14),transparent 26%),radial-gradient(circle at 80% 20%,rgba(52,209,111,.13),transparent 24%),linear-gradient(180deg,#071226 0%,#03102d 100%);color:var(--text);min-height:100%}
-body{padding:22px}
-body::before,body::after{content:"";position:fixed;inset:auto;pointer-events:none;z-index:0;border-radius:999px;filter:blur(10px);opacity:.5}
+html,body{margin:0;padding:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 12% 14%,rgba(255,255,255,.18),transparent 16%),radial-gradient(circle at 78% 18%,rgba(52,216,208,.20),transparent 20%),radial-gradient(circle at 84% 78%,rgba(52,209,111,.16),transparent 16%),linear-gradient(135deg,#071226 0%,#091a33 36%,#03102d 100%);color:var(--text);min-height:100%;background-attachment:fixed}
+body{padding:22px;position:relative;overflow-x:hidden}
+body::before,body::after{content:"";position:fixed;inset:auto;pointer-events:none;z-index:0;border-radius:999px;filter:blur(12px);opacity:.62}
+body::before,body::after,body .glass-orb,body .glass-grid{mix-blend-mode:screen}
+body::after{backdrop-filter:blur(4px)}
 body::before{width:340px;height:340px;left:-70px;top:60px;background:radial-gradient(circle,#2bbcff55,transparent 68%)}
 body::after{width:360px;height:360px;right:-80px;top:20px;background:radial-gradient(circle,#29f2aa33,transparent 70%)}
+body .glass-orb{position:fixed;z-index:0;pointer-events:none;border-radius:999px;filter:blur(8px);opacity:.45}
+body .glass-orb.one{width:220px;height:220px;left:22%;top:10%;background:radial-gradient(circle,rgba(255,255,255,.24),transparent 68%)}
+body .glass-orb.two{width:280px;height:280px;right:12%;bottom:8%;background:radial-gradient(circle,rgba(116,162,255,.22),transparent 70%)}
+body .glass-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);background-size:28px 28px;mask-image:linear-gradient(180deg,rgba(255,255,255,.28),transparent 70%);opacity:.28}
 .app{position:relative;z-index:1;max-width:1600px;margin:0 auto}
-.card{background:linear-gradient(180deg,rgba(12,25,52,.93),rgba(9,19,38,.90));border:1px solid rgba(120,160,220,.16);border-radius:26px;box-shadow:var(--shadow);backdrop-filter:blur(14px)}
-.header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;padding:28px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.05));border:1px solid var(--glass-line);border-radius:26px;box-shadow:0 24px 64px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%)}
+.header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;padding:28px;position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;inset:auto -40px -60px auto;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 64%);pointer-events:none;opacity:.8}
 .kicker{display:inline-flex;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#dbe6ff}
 h1{margin:18px 0 10px;font-size:64px;line-height:.95}
 .subtitle{margin:0;color:var(--muted);font-size:18px}
@@ -33,7 +43,7 @@ label.select-wrap, .search-wrap{display:flex;align-items:center;gap:12px;backgro
 label.select-wrap span, .search-wrap span{color:#d1def8}
 select, .search-wrap input{background:transparent;color:var(--text);border:none;outline:none;min-width:180px}
 select option{color:#0b1730;background:#ffffff}
-.toolbar,.tabs{margin-top:16px;padding:16px 18px}
+.toolbar,.tabs{margin-top:16px;padding:16px 18px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.045))}
 .tabs{display:flex;gap:10px;flex-wrap:wrap}
 .tab{padding:12px 18px;border-radius:14px;background:rgba(11,22,43,.72);border:1px solid rgba(255,255,255,.09);color:#d9e6ff}
 .tab.active{background:linear-gradient(135deg,rgba(64,216,208,.22),rgba(52,209,111,.22));border-color:rgba(85,255,212,.35);color:#fff}
@@ -46,8 +56,8 @@ select option{color:#0b1730;background:#ffffff}
 .view-title h2{margin:0 0 6px;font-size:28px}
 .view-title p{margin:0;color:var(--muted)}
 .weekdays,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
-.weekday{padding:12px 10px;text-align:center;background:rgba(255,255,255,.06);border-radius:14px;color:#d9e5fb;font-weight:600}
-.day{position:relative;min-height:150px;padding:12px;border-radius:18px;background:rgba(9,18,35,.82);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:10px}
+.weekday{padding:12px 10px;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;color:#d9e5fb;font-weight:600;backdrop-filter:blur(10px)}
+.day{position:relative;min-height:150px;padding:12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(16px)}
 .day.outside{opacity:.38}
 .day.today{outline:2px solid rgba(93,255,212,.45);box-shadow:0 0 0 1px rgba(93,255,212,.15) inset}
 .day-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -55,7 +65,7 @@ select option{color:#0b1730;background:#ffffff}
 .add-mini{width:34px;height:34px;padding:0;border-radius:12px;background:rgba(255,255,255,.08)}
 .stack{display:flex;flex-direction:column;gap:7px}
 .empty{color:#8395ba;font-size:13px;padding-top:4px}
-.event{display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:100%;padding:9px 10px;border:none;border-radius:12px;background:var(--chip);color:var(--chip-text);text-align:left}
+.event{display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:100%;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,var(--chip) 86%, white 14%),var(--chip));color:var(--chip-text);text-align:left;box-shadow:0 10px 18px rgba(0,0,0,.14)}
 .event[draggable="true"]{cursor:grab;user-select:none;-webkit-user-drag:none}
 .event.dragging{opacity:.45;transform:scale(.98);cursor:grabbing}
 .day.drop-target{outline:3px dashed rgba(255,255,255,.72);outline-offset:-4px;transform:translateY(-2px)}
@@ -131,6 +141,9 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 </style>
 </head>
 <body>
+<div class="glass-grid"></div>
+<div class="glass-orb one"></div>
+<div class="glass-orb two"></div>
 <div class="app">
   <header class="card header">
     <div>
