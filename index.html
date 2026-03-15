@@ -136,7 +136,7 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
     <div>
       <div class="kicker" id="themeBadge">SÉRIEUSE</div>
       <h1 id="heroTitle">Calendrier partagé</h1>
-      <p class="subtitle" id="heroSubtitle">Un onglet par personne + une vue consolidée de tous les rendez-vous.</p>
+      <p class="subtitle" id="heroSubtitle">Un onglet par personne, dont Caroline, + une vue consolidée de tous les rendez-vous.</p>
     </div>
     <div class="header-actions">
       <label class="select-wrap"><span>Skin</span>
@@ -217,8 +217,24 @@ let quickMenuDay = null;
 let dragState = null;
 function safeId(){ return (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id_'+Math.random().toString(36).slice(2,10); }
 function clone(v){ return JSON.parse(JSON.stringify(v)); }
-const defaultState = { currentDate:new Date().toISOString().slice(0,10), activeTab:'all', theme:'serious', people:[{id:safeId(),name:'Richard',color:'tone-1'},{id:safeId(),name:'Margot',color:'tone-2'}], events:[] };
-function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); const s = raw ? JSON.parse(raw) : null; return s ? Object.assign(clone(defaultState), s) : clone(defaultState);}catch(e){ return clone(defaultState);} }
+const defaultPeople = [{id:safeId(),name:'Richard',color:'tone-1'},{id:safeId(),name:'Margot',color:'tone-2'},{id:safeId(),name:'Caroline',color:'tone-3'}];
+const defaultState = { currentDate:new Date().toISOString().slice(0,10), activeTab:'all', theme:'serious', people:clone(defaultPeople), events:[] };
+function ensureDefaultPeople(s){
+  if(!Array.isArray(s.people)) s.people = [];
+  const existing = new Set(s.people.map(p => String(p.name||'').trim().toLowerCase()));
+  defaultPeople.forEach(p => { if(!existing.has(p.name.toLowerCase())) s.people.push({id:safeId(),name:p.name,color:p.color}); });
+  return s;
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const saved = raw ? JSON.parse(raw) : null;
+    const base = saved ? Object.assign(clone(defaultState), saved) : clone(defaultState);
+    return ensureDefaultPeople(base);
+  }catch(e){
+    return clone(defaultState);
+  }
+}
 let state = loadState();
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
 function normalize(){
