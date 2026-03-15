@@ -56,8 +56,9 @@ select option{color:#0b1730;background:#ffffff}
 .view-title h2{margin:0 0 6px;font-size:28px}
 .view-title p{margin:0;color:var(--muted)}
 .weekdays,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.grid{align-items:start;grid-auto-rows:minmax(150px,auto)}
 .weekday{padding:12px 10px;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;color:#d9e5fb;font-weight:600;backdrop-filter:blur(10px)}
-.day{position:relative;min-height:150px;padding:12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(16px);transition:min-height .40s cubic-bezier(.2,.75,.2,1),transform .26s ease,border-color .26s ease,box-shadow .26s ease,background .26s ease;cursor:pointer;overflow:visible;z-index:1}
+.day{position:relative;min-height:150px;padding:12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(16px);transition:height .42s cubic-bezier(.2,.75,.2,1),min-height .42s cubic-bezier(.2,.75,.2,1),transform .26s ease,border-color .26s ease,box-shadow .26s ease,background .26s ease;cursor:pointer;overflow:visible;z-index:1}
 .day:hover,.day.day-hover-visible,.day.day-expand-active{min-height:var(--hover-target-height,calc(150px + var(--expand-extra,0px)));transform:translateY(-4px);border-color:rgba(255,255,255,.34);box-shadow:0 18px 34px rgba(0,0,0,.24),0 0 0 1px rgba(255,255,255,.08) inset;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.08));z-index:6}
 .day:hover .empty,.day.day-hover-visible .empty,.day.day-expand-active .empty{opacity:.5}
 .day.outside{opacity:.38}
@@ -79,7 +80,7 @@ select option{color:#0b1730;background:#ffffff}
 .stack-extra{display:flex;flex-direction:column;gap:7px;max-height:0;opacity:0;overflow:hidden;transform:translateY(-6px);margin-top:0;transition:max-height .34s cubic-bezier(.2,.75,.2,1),opacity .24s ease,transform .24s ease,margin-top .24s ease}
 .day:hover .stack-extra,.day.day-hover-visible .stack-extra,.day.day-expand-active .stack-extra{max-height:1200px;opacity:1;transform:translateY(0);margin-top:7px}
 .day.day-expand-active .more{display:none}
-.day.day-expand-active .day-hover-card{opacity:0;transform:translateY(8px) scale(.985);pointer-events:none}
+.day.day-expand-active .day-hover-card{opacity:0;transform:translateY(8px) scale(.985);pointer-events:none;display:none}
 .day .stack{position:relative;z-index:2}
 .day.day-expand-active .stack{z-index:7}
 .empty{color:#8395ba;font-size:13px;padding-top:4px}
@@ -432,20 +433,20 @@ function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthM
     day.addEventListener('dblclick', handleDayDoubleClick);
     day.addEventListener('mouseenter',()=>{
       day.classList.add('day-hover-visible','day-expand-active');
-      const stack = day.querySelector('.stack');
-      const extra = day.querySelector('.stack-extra');
-      if(extra) extra.style.maxHeight = 'none';
-      requestAnimationFrame(()=>{
-        const stackHeight = stack ? Math.ceil(stack.scrollHeight) : 0;
-        const needed = Math.max(182, 64 + stackHeight + 24);
-        day.style.setProperty('--hover-target-height', needed + 'px');
-      });
+      expandDayCellFully(day);
     });
     day.addEventListener('mouseleave',()=>{
       day.classList.remove('day-hover-visible','day-expand-active');
       day.style.removeProperty('--hover-target-height');
+      day.style.removeProperty('height');
+      day.style.removeProperty('min-height');
       const extra = day.querySelector('.stack-extra');
-      if(extra) extra.style.removeProperty('max-height');
+      if(extra){
+        extra.style.removeProperty('max-height');
+        extra.style.removeProperty('opacity');
+        extra.style.removeProperty('transform');
+        extra.style.removeProperty('margin-top');
+      }
     });
   });
  }
