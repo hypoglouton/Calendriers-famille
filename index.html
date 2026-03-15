@@ -92,14 +92,18 @@ select option{color:#0b1730;background:#ffffff}
 .drag-ghost time{display:block;font-size:12px;opacity:.8}
 .drag-ghost span{display:block;font-size:14px;font-weight:700}
 body.drag-active{user-select:none;cursor:grabbing}
-.day-menu{position:absolute;left:10px;right:10px;top:42px;z-index:6;padding:12px;border-radius:16px;background:rgba(6,15,31,.96);border:1px solid rgba(255,255,255,.12);box-shadow:0 16px 40px rgba(0,0,0,.35)}
-.day-menu .mini-title{font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em}
-.day-menu .mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.day-menu{position:absolute;left:12px;right:12px;top:46px;z-index:20;padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(8,18,39,.985),rgba(11,24,50,.97));border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 54px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:none;-webkit-backdrop-filter:none}
+.day-menu::before{content:'';position:absolute;inset:0;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 30%);pointer-events:none}
+.day-menu .mini-title{font-size:13px;font-weight:700;color:#eef4ff;margin-bottom:10px;text-transform:uppercase;letter-spacing:.10em;line-height:1.35}
+.day-menu .mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .day-menu .mini-row.one{grid-template-columns:1fr}
 .day-menu select,.day-menu button{width:100%;min-width:0}
-.day-menu select{padding:10px 12px;background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:12px}
-.day-menu .mini-actions{display:flex;gap:8px}
-.day-menu .mini-actions button{padding:10px 12px;border-radius:12px}
+.day-menu select{padding:14px 46px 14px 14px;background:#182641;color:#f7fbff;border:1px solid rgba(255,255,255,.14);border-radius:14px;font-size:16px;font-weight:700;line-height:1.2;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23f7fbff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.day-menu select:focus{outline:none;border-color:rgba(64,216,208,.8);box-shadow:0 0 0 3px rgba(64,216,208,.18)}
+.day-menu select option{background:#ffffff;color:#0f172a}
+.day-menu .mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.day-menu .mini-actions button{padding:13px 12px;border-radius:14px;font-weight:700}
+.day-menu .quick-cancel{background:#1b2740;color:#dfe8ff;border:1px solid rgba(255,255,255,.12)}
 [data-theme="paper"] .day-menu{background:#f8f0e2;border-color:rgba(90,65,35,.18)}
 [data-theme="paper"] .day-menu select{background:#fffaf2;color:#31241a;border-color:rgba(90,65,35,.18)}
 .event time{font-size:12px;opacity:.9}
