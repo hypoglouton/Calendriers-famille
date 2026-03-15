@@ -97,6 +97,8 @@ body.drag-active{user-select:none;cursor:grabbing}
 .day-menu .mini-title{font-size:13px;font-weight:700;color:#eef4ff;margin-bottom:10px;text-transform:uppercase;letter-spacing:.10em;line-height:1.35}
 .day-menu .mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .day-menu .mini-row.one{grid-template-columns:1fr}
+.day-menu .mini-grid-3{display:grid;grid-template-columns:1.35fr .8fr .8fr;gap:10px;margin-bottom:12px}
+.day-menu .mini-label{display:block;font-size:12px;color:#cfe0ff;margin:0 0 6px 2px;letter-spacing:.04em;text-transform:uppercase}
 .day-menu select,.day-menu button,.day-menu input{width:100%;min-width:0}
 .day-menu select,.day-menu input{padding:14px 46px 14px 14px;background:#182641;color:#f7fbff;border:1px solid rgba(255,255,255,.14);border-radius:14px;font-size:16px;font-weight:700;line-height:1.2}
 .day-menu select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23f7fbff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
@@ -470,18 +472,24 @@ function getFilteredEvents(){
   const ownerOptions = state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
   const defaultOwner = state.activeTab==='all' ? (dayEl.getAttribute('data-owner')||state.people[0].id) : state.activeTab;
   const ownerRow = state.activeTab==='all' ? `<div class="mini-row one"><select class="quick-owner">${ownerOptions}</select></div>` : '';
-  dayEl.insertAdjacentHTML('beforeend', `<div class="day-menu">    <div class="mini-title">Choisir la nature du rendez-vous</div>    ${ownerRow}    <div class="mini-row one"><select class="quick-type">${eventTypes.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></div>    <div class="mini-help">Étape 2 : choisis l'heure puis ouvre la fenêtre du rendez-vous.</div>    <div class="mini-row one"><input class="quick-time" type="time" value="09:00"></div>    <div class="mini-actions"><button type="button" class="primary quick-continue">Ouvrir la fenêtre</button><button type="button" class="ghost quick-cancel">Annuler</button></div>  </div>`);
+  dayEl.insertAdjacentHTML('beforeend', `<div class="day-menu">    <div class="mini-title">Choisir la nature du rendez-vous</div>    ${ownerRow}    <div class="mini-row one"><div><span class="mini-label">Type de rendez-vous</span><select class="quick-type">${eventTypes.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></div></div>    <div class="mini-help">Choisis maintenant l'horaire du rendez-vous.</div>    <div class="mini-grid-3">      <div><span class="mini-label">Heure</span><select class="quick-hour">${Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</option>`).join('')}</select></div>      <div><span class="mini-label">Minute</span><select class="quick-minute"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select></div>      <div><span class="mini-label">Durée</span><select class="quick-duration"><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="90">1 h 30</option></select></div>    </div>    <div class="mini-actions"><button type="button" class="primary quick-continue">Continuer</button><button type="button" class="ghost quick-cancel">Annuler</button></div>  </div>`);
   const menu = dayEl.querySelector('.day-menu');
   const ownerSelect = menu.querySelector('.quick-owner');
   if(ownerSelect) ownerSelect.value = defaultOwner;
   menu.querySelector('.quick-cancel').addEventListener('click', closeQuickMenu);
+  const hSel = menu.querySelector('.quick-hour');
+  const mSel = menu.querySelector('.quick-minute');
+  const dSel = menu.querySelector('.quick-duration');
+  hSel.value = '09';
+  mSel.value = '00';
   menu.querySelector('.quick-continue').addEventListener('click', ()=>{
     const ownerId = ownerSelect ? ownerSelect.value : (state.activeTab==='all' ? state.people[0].id : state.activeTab);
     const label = menu.querySelector('.quick-type').value || 'Autre';
-    const time = menu.querySelector('.quick-time').value || '09:00';
+    const time = `${hSel.value || '09'}:${mSel.value || '00'}`;
+    const duration = Number(dSel.value || 30);
     closeQuickMenu();
-    openEvent({id:'',ownerId:ownerId,date:dayEl.getAttribute('data-day-date'),type:label,label:label,time:time,duration:30,location:'',notes:''});
-    setTimeout(()=>{ const input=$('eventTime'); if(input){ input.focus(); input.showPicker && input.showPicker(); } }, 30);
+    openEvent({id:'',ownerId:ownerId,date:dayEl.getAttribute('data-day-date'),type:label,label:label,time:time,duration:duration,location:'',notes:''});
+    setTimeout(()=>{ const input=$('eventLabel'); if(input){ input.focus(); input.select && input.select(); } }, 30);
   });
  }
  function moveEventToDate(eventId,newDate,newOwnerId){ const ev=state.events.find(e=>e.id===eventId); if(!ev || !newDate) return; ev.date=newDate; if(newOwnerId && state.people.some(p=>p.id===newOwnerId)) ev.ownerId=newOwnerId; state.events.sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); saveState(); render(); }
