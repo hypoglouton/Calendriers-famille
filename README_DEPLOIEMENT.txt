@@ -1,1 +1,1 @@
-Remplace uniquement index.html à la racine du repo, puis commit et fais Ctrl + F5.
+Remplace uniquement index.html à la racine du repo.
