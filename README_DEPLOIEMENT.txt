@@ -1,1 +1,1 @@
-Remplacer uniquement index.html à la racine du repo.
+Remplacer uniquement index.html dans le repo GitHub.

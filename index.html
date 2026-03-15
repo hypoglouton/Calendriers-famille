@@ -56,7 +56,7 @@ select option{color:#0b1730;background:#ffffff}
 .stack{display:flex;flex-direction:column;gap:7px}
 .empty{color:#8395ba;font-size:13px;padding-top:4px}
 .event{display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:100%;padding:9px 10px;border:none;border-radius:12px;background:var(--chip);color:var(--chip-text);text-align:left}
-.event[draggable="true"]{cursor:grab}
+.event[draggable="true"]{cursor:grab;user-select:none;-webkit-user-drag:none}
 .event.dragging{opacity:.45;transform:scale(.98);cursor:grabbing}
 .day.drop-target{outline:3px dashed rgba(255,255,255,.72);outline-offset:-4px;transform:translateY(-2px)}
 .drag-ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;padding:10px 12px;border-radius:12px;background:rgba(7,16,34,.96);border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.35);color:#fff;max-width:220px}
@@ -271,6 +271,7 @@ function getFilteredEvents(){
     const ev=state.events.find(x=>x.id===btn.getAttribute('data-edit')); if(ev) openEvent(ev);
   }));
   document.querySelectorAll('.event[data-event-id]').forEach(btn=>{
+    btn.addEventListener('dragstart',e=>e.preventDefault());
     btn.addEventListener('mousedown',startMouseDrag);
   });
  }
@@ -288,6 +289,8 @@ function getFilteredEvents(){
   const btn=e.currentTarget;
   const eventId = btn.getAttribute('data-event-id');
   if(!eventId) return;
+  e.preventDefault();
+  e.stopPropagation();
   closeQuickMenu();
   dragState = {eventId:eventId, sourceBtn:btn, startX:e.clientX, startY:e.clientY, moved:false, ghost:null, activeDay:null};
   document.addEventListener('mousemove',onMouseDrag);
@@ -302,6 +305,7 @@ function getFilteredEvents(){
     dragState.moved = true;
     document.body.classList.add('drag-active');
     dragState.sourceBtn.classList.add('dragging');
+    dragState.sourceBtn.style.pointerEvents='none';
     const ghost=document.createElement('div');
     ghost.className='drag-ghost';
     ghost.innerHTML=dragState.sourceBtn.innerHTML;
@@ -326,7 +330,10 @@ function getFilteredEvents(){
   removeDragGhost();
   clearDropTargets();
   document.body.classList.remove('drag-active');
-  if(sourceBtn) sourceBtn.classList.remove('dragging');
+  if(sourceBtn){
+    sourceBtn.classList.remove('dragging');
+    sourceBtn.style.pointerEvents='';
+  }
   dragState=null;
   if(moved && targetDay){
     const targetOwner = state.activeTab==='all' ? null : (targetDay.getAttribute('data-owner') || state.activeTab);
