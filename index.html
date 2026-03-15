@@ -227,6 +227,25 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 [data-theme="darkpremium"] body .glass-orb.two{background:radial-gradient(circle,rgba(32,215,255,.18),transparent 70%)}
 [data-theme="darkpremium"] body .glass-grid{opacity:.14}
 [data-theme="galaxy"]{--accent:#6a6cff;--accent-2:#ff58d8;--panel-solid:#0a0620;--muted:#d2c7ff}
+
+.focus-shell{margin:18px 0;padding:20px 20px 22px}
+.focus-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
+.focus-head h2{margin:0 0 6px;font-size:28px}
+.focus-head p{margin:0;color:var(--muted)}
+.focus-meta{display:flex;gap:10px;flex-wrap:wrap}
+.focus-badge{display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#dfe9ff;font-size:13px}
+.focus-strip-wrap{overflow-x:auto;overflow-y:visible;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+.focus-strip-wrap::-webkit-scrollbar{height:12px}
+.focus-strip-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+.focus-strip{display:flex;gap:14px;align-items:stretch;min-width:max-content;padding:4px 2px;scroll-snap-type:x proximity}
+.focus-card{flex:0 0 clamp(270px,26vw,360px);min-height:240px;max-width:360px;scroll-snap-align:center;cursor:default}
+.focus-card .day-number{font-size:30px}
+.focus-card .weekday-mini{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.focus-card .event{padding:12px 12px;border-radius:14px}
+.focus-card.focus-anchor,.focus-card.today{outline:2px solid rgba(93,255,212,.46);box-shadow:0 0 0 1px rgba(93,255,212,.15) inset,0 18px 36px rgba(0,0,0,.26)}
+.focus-card .stack-primary,.focus-card .stack-extra{gap:9px}
+[data-theme="paper"] .focus-badge{background:#f8efdf;border-color:rgba(90,65,35,.14);color:#5d4a38}
+@media (max-width:900px){.focus-card{flex-basis:78vw;max-width:none}.focus-head h2{font-size:24px}}
 @media (max-width:1100px){h1{font-size:48px}.header{flex-direction:column}.header-actions{justify-content:flex-start}.toolbar{flex-direction:column;align-items:stretch}.month-nav{justify-content:space-between}.month-label{text-align:left;min-width:0}}
 @media (max-width:980px){.family-board{grid-template-columns:1fr}}
 @media (max-width:780px){body{padding:12px}.weekdays,.grid{gap:6px}.weekday{font-size:12px;padding:10px 4px}.day{min-height:112px;padding:8px}.day-number{font-size:18px}.row{grid-template-columns:1fr}.month-nav{gap:10px}.month-label{font-size:24px;width:100%}.header h1{font-size:40px}.dashboard-cards{grid-template-columns:1fr}.dashboard-head h2{font-size:24px}.dashboard-card .value{font-size:22px}}
@@ -431,7 +450,7 @@ function renderFocusStrip(events,isCombined,ownerId){
     const dayEvents = events.filter(e=>e.date===iso && (isCombined || e.ownerId===ownerId));
     cards.push(dayCell({date:dayDate,currentMonth:true}, anchorDate, dayEvents, isCombined, ownerId).replace('<article class="day ', `<article class="day focus-card ${dayNum===anchorDay?'focus-anchor ':''}`));
   }
-  return `<section class="card focus-shell"><div class="focus-head"><div><h2>Vue lisible sur 12 jours</h2><p>Cases plus grandes, centrées autour de la date de référence. Fais défiler horizontalement pour voir le reste du mois.</p></div><div class="focus-meta"><span class="focus-badge">5 jours avant</span><span class="focus-badge">Jour repère : ${formatDateFr(anchorDate,true)}</span><span class="focus-badge">7 jours après</span></div></div><div class="focus-strip-wrap" data-focus-strip-wrap="1"><div class="focus-strip" data-focus-strip="1">${cards.join('')}</div></div></section>`;
+  return `<section class="card focus-shell"><div class="focus-head"><div><h2>Vue resserrée autour d'aujourd'hui</h2><p>Grandes cases horizontales, centrées autour de la date du jour. Tu gardes la vue mensuelle en dessous, mais ici tu lis beaucoup plus facilement la période proche.</p></div><div class="focus-meta"><span class="focus-badge">5 jours avant</span><span class="focus-badge">Jour repère : ${formatDateFr(anchorDate,true)}</span><span class="focus-badge">7 jours après</span></div></div><div class="focus-strip-wrap" data-focus-strip-wrap="1"><div class="focus-strip" data-focus-strip="1">${cards.join('')}</div></div></section>`;
 }
 function syncFocusStrip(){
   const wrap = document.querySelector('[data-focus-strip-wrap]');
