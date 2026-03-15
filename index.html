@@ -92,12 +92,12 @@ select option{color:#0b1730;background:#ffffff}
 .drag-ghost time{display:block;font-size:12px;opacity:.8}
 .drag-ghost span{display:block;font-size:14px;font-weight:700}
 body.drag-active{user-select:none;cursor:grabbing}
-.day-menu{position:absolute;left:12px;right:12px;top:46px;z-index:20;padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(8,18,39,.985),rgba(11,24,50,.97));border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 54px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:none;-webkit-backdrop-filter:none}
+.day-menu{position:fixed;z-index:10000;width:min(360px,calc(100vw - 24px));padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(8,18,39,.985),rgba(11,24,50,.97));border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 54px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:none;-webkit-backdrop-filter:none}
 .day-menu::before{content:'';position:absolute;inset:0;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 30%);pointer-events:none}
 .day-menu .mini-title{font-size:13px;font-weight:700;color:#eef4ff;margin-bottom:10px;text-transform:uppercase;letter-spacing:.10em;line-height:1.35}
 .day-menu .mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .day-menu .mini-row.one{grid-template-columns:1fr}
-.day-menu .mini-grid-3{display:grid;grid-template-columns:1.35fr .8fr .8fr;gap:10px;margin-bottom:12px}
+.day-menu .mini-grid-3{display:grid;grid-template-columns:1.2fr .9fr .95fr;gap:10px;margin-bottom:12px}
 .day-menu .mini-label{display:block;font-size:12px;color:#cfe0ff;margin:0 0 6px 2px;letter-spacing:.04em;text-transform:uppercase}
 .day-menu select,.day-menu button,.day-menu input{width:100%;min-width:0}
 .day-menu select,.day-menu input{padding:14px 46px 14px 14px;background:#182641;color:#f7fbff;border:1px solid rgba(255,255,255,.14);border-radius:14px;font-size:16px;font-weight:700;line-height:1.2}
@@ -111,6 +111,8 @@ body.drag-active{user-select:none;cursor:grabbing}
 .day-menu .quick-cancel{background:#1b2740;color:#dfe8ff;border:1px solid rgba(255,255,255,.12)}
 [data-theme="paper"] .day-menu{background:#f8f0e2;border-color:rgba(90,65,35,.18)}
 [data-theme="paper"] .day-menu select{background:#fffaf2;color:#31241a;border-color:rgba(90,65,35,.18)}
+[data-theme="paper"] .day-menu .mini-title,[data-theme="paper"] .day-menu .mini-label{color:#3d2d1f}
+@media (max-width: 720px){.day-menu{width:min(94vw,360px)}.day-menu .mini-grid-3{grid-template-columns:1fr}}
 .event time{font-size:12px;opacity:.9}
 .event small{font-size:12px;opacity:.82}
 .more{font-size:12px;color:#bdd2ff;background:rgba(255,255,255,.06);padding:7px 9px;border-radius:10px}
@@ -314,6 +316,7 @@ const themeMeta = {
   galaxy:{badge:'GALAXIE',title:'Constellation des RDV',subtitle:'Version spatiale plus spectaculaire.'}
 };
 let quickMenuDay = null;
+let quickMenuNode = null;
 let dragState = null;
 function safeId(){ return (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id_'+Math.random().toString(36).slice(2,10); }
 function clone(v){ return JSON.parse(JSON.stringify(v)); }
@@ -464,24 +467,43 @@ function getFilteredEvents(){
  function render(){ applyTheme(); renderTabs(); renderMonthLabel(); $('viewRoot').innerHTML = state.activeTab==='all' ? renderCombined() : renderPersonCalendar(state.activeTab); bindDynamic(); }
  function openModal(id){ $(id).classList.add('open'); }
  function closeModal(id){ $(id).classList.remove('open'); }
- function closeQuickMenu(){ if(quickMenuDay){ const menu=quickMenuDay.querySelector('.day-menu'); if(menu) menu.remove(); quickMenuDay=null; } }
+ function closeQuickMenu(){ if(quickMenuNode){ quickMenuNode.remove(); quickMenuNode=null; } if(quickMenuDay){ quickMenuDay.classList.remove('menu-open'); quickMenuDay=null; } }
  function openQuickMenu(dayEl){
   closeQuickMenu();
   if(!dayEl || dayEl.classList.contains('outside')) return;
   quickMenuDay=dayEl;
+  dayEl.classList.add('menu-open');
   const ownerOptions = state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
   const defaultOwner = state.activeTab==='all' ? (dayEl.getAttribute('data-owner')||state.people[0].id) : state.activeTab;
-  const ownerRow = state.activeTab==='all' ? `<div class="mini-row one"><select class="quick-owner">${ownerOptions}</select></div>` : '';
-  dayEl.insertAdjacentHTML('beforeend', `<div class="day-menu">    <div class="mini-title">Choisir la nature du rendez-vous</div>    ${ownerRow}    <div class="mini-row one"><div><span class="mini-label">Type de rendez-vous</span><select class="quick-type">${eventTypes.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></div></div>    <div class="mini-help">Choisis maintenant l'horaire du rendez-vous.</div>    <div class="mini-grid-3">      <div><span class="mini-label">Heure</span><select class="quick-hour">${Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</option>`).join('')}</select></div>      <div><span class="mini-label">Minute</span><select class="quick-minute"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select></div>      <div><span class="mini-label">Durée</span><select class="quick-duration"><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="90">1 h 30</option></select></div>    </div>    <div class="mini-actions"><button type="button" class="primary quick-continue">Continuer</button><button type="button" class="ghost quick-cancel">Annuler</button></div>  </div>`);
-  const menu = dayEl.querySelector('.day-menu');
+  const ownerRow = state.activeTab==='all' ? `<div class="mini-row one"><div><span class="mini-label">Personne</span><select class="quick-owner">${ownerOptions}</select></div></div>` : '';
+  const menuHtml = `<div class="day-menu" role="dialog" aria-label="Choix du rendez-vous"><div class="mini-title">Choisir la nature du rendez-vous</div>${ownerRow}<div class="mini-row one"><div><span class="mini-label">Type de rendez-vous</span><select class="quick-type">${eventTypes.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></div></div><div class="mini-help">Choisis aussi l'heure avant de continuer.</div><div class="mini-grid-3"><div><span class="mini-label">Heure</span><select class="quick-hour">${Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</option>`).join('')}</select></div><div><span class="mini-label">Minute</span><select class="quick-minute"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select></div><div><span class="mini-label">Durée</span><select class="quick-duration"><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="90">1 h 30</option></select></div></div><div class="mini-actions"><button type="button" class="primary quick-continue">Continuer</button><button type="button" class="ghost quick-cancel">Annuler</button></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', menuHtml);
+  const menu = document.body.querySelector('.day-menu:last-of-type');
+  quickMenuNode = menu;
+  const rect = dayEl.getBoundingClientRect();
+  const menuWidth = Math.min(360, window.innerWidth - 24);
+  let left = rect.left + 8;
+  if(left + menuWidth > window.innerWidth - 12) left = window.innerWidth - menuWidth - 12;
+  if(left < 12) left = 12;
+  let top = rect.top + 46;
+  menu.style.width = menuWidth + 'px';
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+  requestAnimationFrame(()=>{
+    const mh = menu.offsetHeight || 0;
+    if(top + mh > window.innerHeight - 12){
+      top = Math.max(12, rect.bottom - mh - 8);
+      menu.style.top = top + 'px';
+    }
+  });
   const ownerSelect = menu.querySelector('.quick-owner');
   if(ownerSelect) ownerSelect.value = defaultOwner;
-  menu.querySelector('.quick-cancel').addEventListener('click', closeQuickMenu);
   const hSel = menu.querySelector('.quick-hour');
   const mSel = menu.querySelector('.quick-minute');
   const dSel = menu.querySelector('.quick-duration');
   hSel.value = '09';
   mSel.value = '00';
+  menu.querySelector('.quick-cancel').addEventListener('click', closeQuickMenu);
   menu.querySelector('.quick-continue').addEventListener('click', ()=>{
     const ownerId = ownerSelect ? ownerSelect.value : (state.activeTab==='all' ? state.people[0].id : state.activeTab);
     const label = menu.querySelector('.quick-type').value || 'Autre';
@@ -489,7 +511,6 @@ function getFilteredEvents(){
     const duration = Number(dSel.value || 30);
     closeQuickMenu();
     openEvent({id:'',ownerId:ownerId,date:dayEl.getAttribute('data-day-date'),type:label,label:label,time:time,duration:duration,location:'',notes:''});
-    setTimeout(()=>{ const input=$('eventLabel'); if(input){ input.focus(); input.select && input.select(); } }, 30);
   });
  }
  function moveEventToDate(eventId,newDate,newOwnerId){ const ev=state.events.find(e=>e.id===eventId); if(!ev || !newDate) return; ev.date=newDate; if(newOwnerId && state.people.some(p=>p.id===newOwnerId)) ev.ownerId=newOwnerId; state.events.sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); saveState(); render(); }
@@ -497,7 +518,7 @@ function getFilteredEvents(){
  function saveEvent(){ const label=$('eventLabel').value.trim(); if(!label){ alert('Entre un titre.'); return; } const payload={ id:$('eventId').value||safeId(), ownerId:$('eventOwnerId').value||state.people[0].id, date:$('eventDate').value||dateVal(new Date()), type:normalizeType($('eventType').value), label:label, time:$('eventTime').value||'09:00', duration:Number($('eventDuration').value)||30, location:$('eventLocation').value.trim(), notes:$('eventNotes').value.trim() }; const idx=state.events.findIndex(e=>e.id===payload.id); if(idx>=0) state.events[idx]=payload; else state.events.push(payload); state.events.sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); saveState(); closeModal('eventModal'); render(); }
  function deleteEvent(){ const id=$('eventId').value; if(!id) return; state.events = state.events.filter(e=>e.id!==id); saveState(); closeModal('eventModal'); render(); }
  function addPerson(){ const name=$('personNameInput').value.trim(); if(!name){ alert('Entre un nom.'); return; } const p={id:safeId(),name:name,color:palette[state.people.length%palette.length]}; state.people.push(p); state.activeTab=p.id; saveState(); $('personNameInput').value=''; closeModal('personModal'); render(); }
- function bindStatic(){ $('prevMonthBtn').addEventListener('click',()=>{ closeQuickMenu(); shiftMonth(-1); }); $('nextMonthBtn').addEventListener('click',()=>{ closeQuickMenu(); shiftMonth(1); }); $('todayBtn').addEventListener('click',()=>{ closeQuickMenu(); state.currentDate=dateVal(new Date()); saveState(); render(); }); $('searchInput').addEventListener('input',render); $('themeSelect').addEventListener('change',()=>{ closeQuickMenu(); state.theme=$('themeSelect').value; saveState(); render(); }); $('addPersonBtn').addEventListener('click',()=>openModal('personModal')); $('cancelPersonBtn').addEventListener('click',()=>closeModal('personModal')); $('savePersonBtn').addEventListener('click',addPerson); $('cancelEventBtn').addEventListener('click',()=>closeModal('eventModal')); $('saveEventBtn').addEventListener('click',saveEvent); $('deleteEventBtn').addEventListener('click',deleteEvent); ['personModal','eventModal'].forEach(id=>$(id).addEventListener('click',e=>{ if(e.target.id===id) closeModal(id); })); document.addEventListener('click',e=>{ if(quickMenuDay && !e.target.closest('.day-menu') && !e.target.closest('.day')) closeQuickMenu(); }); document.addEventListener('contextmenu',e=>{ const day=e.target.closest('.day[data-day-date]'); if(!day || day.classList.contains('outside') || e.target.closest('.day-menu') || e.target.closest('.add-mini')) return; e.preventDefault(); e.stopPropagation(); openQuickMenu(day); }); document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeQuickMenu(); }); }
+ function bindStatic(){ $('prevMonthBtn').addEventListener('click',()=>{ closeQuickMenu(); shiftMonth(-1); }); $('nextMonthBtn').addEventListener('click',()=>{ closeQuickMenu(); shiftMonth(1); }); $('todayBtn').addEventListener('click',()=>{ closeQuickMenu(); state.currentDate=dateVal(new Date()); saveState(); render(); }); $('searchInput').addEventListener('input',render); $('themeSelect').addEventListener('change',()=>{ closeQuickMenu(); state.theme=$('themeSelect').value; saveState(); render(); }); $('addPersonBtn').addEventListener('click',()=>openModal('personModal')); $('cancelPersonBtn').addEventListener('click',()=>closeModal('personModal')); $('savePersonBtn').addEventListener('click',addPerson); $('cancelEventBtn').addEventListener('click',()=>closeModal('eventModal')); $('saveEventBtn').addEventListener('click',saveEvent); $('deleteEventBtn').addEventListener('click',deleteEvent); ['personModal','eventModal'].forEach(id=>$(id).addEventListener('click',e=>{ if(e.target.id===id) closeModal(id); })); document.addEventListener('click',e=>{ if((quickMenuDay || quickMenuNode) && !e.target.closest('.day-menu') && !e.target.closest('.day')) closeQuickMenu(); }); document.addEventListener('contextmenu',e=>{ const day=e.target.closest('.day[data-day-date]'); if(!day || day.classList.contains('outside') || e.target.closest('.day-menu') || e.target.closest('.add-mini')) return; e.preventDefault(); e.stopPropagation(); openQuickMenu(day); }); document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeQuickMenu(); }); }
  try{ normalize(); seedDemo(); bindStatic(); render(); }
  catch(err){ console.error(err); document.body.innerHTML = '<div style="padding:24px;color:white;font-family:Arial,sans-serif"><h2>Erreur de chargement</h2><pre style="white-space:pre-wrap">'+(err && err.stack ? err.stack : String(err))+'</pre></div>'; }
 })();
