@@ -83,6 +83,10 @@ select option{color:#0b1730;background:#ffffff}
 .day.day-expand-active .day-hover-card{opacity:0;transform:translateY(8px) scale(.985);pointer-events:none;display:none}
 .day .stack{position:relative;z-index:2}
 .day.day-expand-active .stack{z-index:7}
+.day-expand-overlay{position:fixed;z-index:9999;padding:12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.10));border:1px solid rgba(255,255,255,.34);box-shadow:0 30px 70px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.08) inset;backdrop-filter:blur(18px);display:flex;flex-direction:column;gap:10px;overflow:visible;pointer-events:auto;transition:opacity .16s ease,transform .16s ease,height .24s ease}
+.day-expand-overlay .stack-extra{max-height:none!important;opacity:1!important;overflow:visible!important;transform:none!important;margin-top:7px!important}
+.day-expand-overlay .more,.day-expand-overlay .day-hover-card,.day-expand-overlay .add-mini{display:none!important}
+.day-expand-overlay .stack{z-index:2}
 .empty{color:#8395ba;font-size:13px;padding-top:4px}
 .event{display:flex;flex-direction:column;gap:4px;align-items:flex-start;width:100%;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,var(--type-bg,#264a86) 86%, white 14%),var(--type-bg,#264a86));color:var(--type-text,#f5fbff);text-align:left;box-shadow:0 10px 18px rgba(0,0,0,.14)}
 .event-head{display:flex;align-items:center;gap:8px;width:100%}
@@ -419,28 +423,54 @@ function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthM
   openQuickMenu(day);
  }
 
- function expandDayCellFully(day){
-  if(!day) return;
-  const head = day.querySelector('.day-head');
-  const stack = day.querySelector('.stack');
-  if(!head || !stack) return;
-  const extra = day.querySelector('.stack-extra');
-  if(extra){
-    extra.style.maxHeight = '2000px';
-    extra.style.opacity = '1';
-    extra.style.transform = 'translateY(0)';
-    extra.style.marginTop = '7px';
+ let expandOverlay=null, expandOverlayTimer=null;
+
+ function removeExpandOverlay(){
+  if(expandOverlayTimer){ clearTimeout(expandOverlayTimer); expandOverlayTimer=null; }
+  if(expandOverlay){
+    expandOverlay.remove();
+    expandOverlay=null;
   }
-  requestAnimationFrame(()=>{
-    const cs = getComputedStyle(day);
-    const pt = parseFloat(cs.paddingTop)||0;
-    const pb = parseFloat(cs.paddingBottom)||0;
-    const gap = 10;
-    const target = Math.max(150, Math.ceil((head.offsetHeight||0) + (stack.scrollHeight||0) + pt + pb + gap));
-    day.style.setProperty('--hover-target-height', target + 'px');
-    day.style.minHeight = target + 'px';
-    day.style.height = target + 'px';
+  document.querySelectorAll('.day.day-expand-active').forEach(day=>day.classList.remove('day-expand-active'));
+ }
+
+ function scheduleRemoveExpandOverlay(){
+  if(expandOverlayTimer) clearTimeout(expandOverlayTimer);
+  expandOverlayTimer=setTimeout(removeExpandOverlay,120);
+ }
+
+ function showExpandOverlay(day){
+  if(!day || day.classList.contains('outside')) return;
+  removeExpandOverlay();
+  const rect=day.getBoundingClientRect();
+  const overlay=day.cloneNode(true);
+  overlay.classList.remove('today');
+  overlay.classList.add('day-expand-overlay');
+  overlay.querySelectorAll('[data-edit]').forEach(btn=>btn.removeAttribute('data-edit'));
+  overlay.querySelectorAll('.event').forEach(ev=>{
+    ev.removeAttribute('data-event-id');
+    ev.style.pointerEvents='none';
+    ev.removeAttribute('draggable');
   });
+  const head=overlay.querySelector('.day-head');
+  const stack=overlay.querySelector('.stack');
+  let target=Math.max(rect.height,150);
+  if(head && stack){
+    const cs=getComputedStyle(day);
+    const pt=parseFloat(cs.paddingTop)||0;
+    const pb=parseFloat(cs.paddingBottom)||0;
+    target=Math.max(170, Math.ceil((head.offsetHeight||0) + (stack.scrollHeight||0) + pt + pb + 12));
+  }
+  overlay.style.left=rect.left+'px';
+  overlay.style.top=rect.top+'px';
+  overlay.style.width=rect.width+'px';
+  overlay.style.minHeight=target+'px';
+  overlay.style.height=target+'px';
+  overlay.addEventListener('mouseenter',()=>{ if(expandOverlayTimer){ clearTimeout(expandOverlayTimer); expandOverlayTimer=null; } });
+  overlay.addEventListener('mouseleave',scheduleRemoveExpandOverlay);
+  document.body.appendChild(overlay);
+  day.classList.add('day-expand-active');
+  expandOverlay=overlay;
  }
 
  function bindDynamic(){
@@ -457,21 +487,12 @@ function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthM
     if(day.classList.contains('outside')) return;
     day.addEventListener('dblclick', handleDayDoubleClick);
     day.addEventListener('mouseenter',()=>{
-      day.classList.add('day-hover-visible','day-expand-active');
-      expandDayCellFully(day);
+      day.classList.add('day-hover-visible');
+      showExpandOverlay(day);
     });
     day.addEventListener('mouseleave',()=>{
-      day.classList.remove('day-hover-visible','day-expand-active');
-      day.style.removeProperty('--hover-target-height');
-      day.style.removeProperty('height');
-      day.style.removeProperty('min-height');
-      const extra = day.querySelector('.stack-extra');
-      if(extra){
-        extra.style.removeProperty('max-height');
-        extra.style.removeProperty('opacity');
-        extra.style.removeProperty('transform');
-        extra.style.removeProperty('margin-top');
-      }
+      day.classList.remove('day-hover-visible');
+      scheduleRemoveExpandOverlay();
     });
   });
  }
