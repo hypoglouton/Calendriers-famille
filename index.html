@@ -456,8 +456,9 @@ function syncFocusStrip(){
   const wrap = document.querySelector('[data-focus-strip-wrap]');
   const anchor = document.querySelector('.focus-strip .focus-anchor, .focus-strip .today');
   if(!wrap || !anchor) return;
-  const anchorLeft = anchor.offsetLeft;
-  const target = Math.max(0, anchorLeft - Math.max(0, anchor.offsetWidth * 5.2));
+  const anchorCenter = anchor.offsetLeft + (anchor.offsetWidth / 2);
+  const preferredAnchorRatio = 5 / 12;
+  const target = Math.max(0, anchorCenter - (wrap.clientWidth * preferredAnchorRatio));
   wrap.scrollLeft = target;
 }
 function dayCell(day,today,events,isCombined,ownerId){ const iso=dateVal(day.date), visibleCount=isCombined?4:3, sorted=[...events].sort((a,b)=>a.time.localeCompare(b.time)), primary=sorted.slice(0,visibleCount), extra=sorted.slice(visibleCount), more=extra.length, dayOwner=(ownerId||state.people[0].id), nextTime=sorted[0]?.time||'—', owners=isCombined?[...new Set(sorted.map(e=>(getPerson(e.ownerId)||{}).name).filter(Boolean))]:[], ownerLine=isCombined && owners.length?owners.join(' • '):'', expandExtra=Math.min(Math.max(sorted.length-visibleCount,0)*64 + (sorted.length>visibleCount?22:0), 320); return `<article class="day ${day.currentMonth?'':'outside'} ${iso===today?'today':''}" data-day-date="${iso}" data-owner="${dayOwner}" data-combined="${isCombined?'1':'0'}" style="--expand-extra:${expandExtra}px"><div class="day-head"><span class="day-number">${day.date.getDate()}</span>${day.currentMonth?`<button class="add-mini" data-add-date="${iso}" data-owner="${dayOwner}">+</button>`:''}</div><div class="stack">${sorted.length?`<div class="stack-primary">${primary.map(e=>eventBtn(e,isCombined)).join('')}</div>${extra.length?`<div class="stack-extra">${extra.map(e=>eventBtn(e,isCombined)).join('')}</div>`:''}${more>0?`<div class="more">+ ${more} autre(s)</div>`:''}`:'<div class="empty">Aucun rendez-vous</div>'}</div></article>`; }
