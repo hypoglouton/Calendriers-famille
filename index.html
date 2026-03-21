@@ -252,13 +252,18 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 .focus-strip-wrap{overflow-x:auto;overflow-y:visible;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;overscroll-behavior-x:contain;scroll-padding-inline:28px;-webkit-overflow-scrolling:touch;touch-action:pan-x}
 .focus-strip-wrap::-webkit-scrollbar{height:12px}
 .focus-strip-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
-.focus-strip{display:flex;gap:14px;align-items:stretch;min-width:max-content;padding:4px 2px;scroll-snap-type:x proximity}
-.focus-card{flex:0 0 clamp(270px,26vw,360px);min-height:240px;max-width:360px;scroll-snap-align:center;cursor:default}
+.focus-strip{display:flex;gap:14px;align-items:flex-start;min-width:max-content;padding:4px 2px}
+.focus-card{flex:0 0 clamp(270px,26vw,360px);min-height:240px;max-width:360px;cursor:default}
 .focus-card .day-number{font-size:30px}
 .focus-card .weekday-mini{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .focus-card .event{padding:12px 12px;border-radius:14px}
 .focus-card.focus-anchor,.focus-card.today{outline:2px solid rgba(93,255,212,.46);box-shadow:0 0 0 1px rgba(93,255,212,.15) inset,0 18px 36px rgba(0,0,0,.26)}
 .focus-card .stack-primary,.focus-card .stack-extra{gap:9px}
+.focus-strip .day:hover,.focus-strip .day.day-hover-visible,.focus-strip .day.day-expand-active{transform:none;min-height:240px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);z-index:2}
+.focus-strip .focus-card{overflow:visible}
+.focus-strip .stack-extra{max-height:none;opacity:1;overflow:visible;transform:none;margin-top:7px}
+.focus-strip .more{display:none}
+.focus-strip .add-mini{display:none}
 [data-theme="paper"] .focus-badge{background:#f8efdf;border-color:rgba(90,65,35,.14);color:#5d4a38}
 @media (max-width:900px){.focus-card{flex-basis:78vw;max-width:none}.focus-head h2{font-size:24px}}
 [data-theme="mangacats"]{--accent:#ff7db0;--accent-2:#7ee7ff;--panel-solid:#23122a;--text:#fff8fd;--muted:#f2c9db;--glass-line:rgba(255,195,226,.22)}
@@ -324,13 +329,18 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 .focus-strip-wrap{overflow-x:auto;overflow-y:visible;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;overscroll-behavior-x:contain;scroll-padding-inline:28px;-webkit-overflow-scrolling:touch;touch-action:pan-x}
 .focus-strip-wrap::-webkit-scrollbar{height:12px}
 .focus-strip-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
-.focus-strip{display:flex;gap:14px;align-items:stretch;min-width:max-content;padding:4px 2px;scroll-snap-type:x proximity}
-.focus-card{flex:0 0 clamp(270px,26vw,360px);min-height:240px;max-width:360px;scroll-snap-align:center;cursor:default}
+.focus-strip{display:flex;gap:14px;align-items:flex-start;min-width:max-content;padding:4px 2px}
+.focus-card{flex:0 0 clamp(270px,26vw,360px);min-height:240px;max-width:360px;cursor:default}
 .focus-card .day-number{font-size:30px}
 .focus-card .weekday-mini{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .focus-card .event{padding:12px 12px;border-radius:14px}
 .focus-card.focus-anchor,.focus-card.today{outline:2px solid rgba(93,255,212,.46);box-shadow:0 0 0 1px rgba(93,255,212,.15) inset,0 18px 36px rgba(0,0,0,.26)}
 .focus-card .stack-primary,.focus-card .stack-extra{gap:9px}
+.focus-strip .day:hover,.focus-strip .day.day-hover-visible,.focus-strip .day.day-expand-active{transform:none;min-height:240px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);z-index:2}
+.focus-strip .focus-card{overflow:visible}
+.focus-strip .stack-extra{max-height:none;opacity:1;overflow:visible;transform:none;margin-top:7px}
+.focus-strip .more{display:none}
+.focus-strip .add-mini{display:none}
 [data-theme="paper"] .focus-badge{background:#f8efdf;border-color:rgba(90,65,35,.14);color:#5d4a38}
 @media (max-width:900px){.focus-card{flex-basis:78vw;max-width:none}.focus-head h2{font-size:24px}}
 @media (max-width:1100px){h1{font-size:48px}.header{flex-direction:column}.header-actions{justify-content:flex-start}.toolbar{flex-direction:column;align-items:stretch}.month-nav{justify-content:space-between}.month-label{text-align:left;min-width:0}}
@@ -723,13 +733,11 @@ function syncFocusStrip(){
   const wrap = document.querySelector('[data-focus-strip-wrap]');
   const anchor = document.querySelector('.focus-strip .focus-anchor, .focus-strip .today');
   if(!wrap || !anchor) return;
-  requestAnimationFrame(()=>{
-    const anchorCenter = anchor.offsetLeft + (anchor.offsetWidth / 2);
-    const preferredAnchorRatio = 5 / 12;
-    const maxLeft = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
-    const target = Math.max(0, Math.min(maxLeft, anchorCenter - (wrap.clientWidth * preferredAnchorRatio)));
-    wrap.scrollLeft = target;
-  });
+  const anchorCenter = anchor.offsetLeft + (anchor.offsetWidth / 2);
+  const preferredAnchorRatio = 5 / 12;
+  const maxLeft = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+  const target = Math.max(0, Math.min(maxLeft, anchorCenter - (wrap.clientWidth * preferredAnchorRatio)));
+  wrap.scrollLeft = target;
 }
 function dayCell(day,today,events,isCombined,ownerId){ const iso=dateVal(day.date), visibleCount=isCombined?4:3, sorted=[...events].sort((a,b)=>a.time.localeCompare(b.time)), primary=sorted.slice(0,visibleCount), extra=sorted.slice(visibleCount), more=extra.length, dayOwner=(ownerId||state.people[0].id), nextTime=sorted[0]?.time||'—', owners=isCombined?[...new Set(sorted.map(e=>(getPerson(e.ownerId)||{}).name).filter(Boolean))]:[], ownerLine=isCombined && owners.length?owners.join(' • '):'', expandExtra=Math.min(Math.max(sorted.length-visibleCount,0)*64 + (sorted.length>visibleCount?22:0), 320); return `<article class="day ${day.currentMonth?'':'outside'} ${iso===today?'today':''}" data-day-date="${iso}" data-owner="${dayOwner}" data-combined="${isCombined?'1':'0'}" style="--expand-extra:${expandExtra}px"><div class="day-head"><span class="day-number">${day.date.getDate()}</span>${day.currentMonth?`<button class="add-mini" data-add-date="${iso}" data-owner="${dayOwner}">+</button>`:''}</div><div class="stack">${sorted.length?`<div class="stack-primary">${primary.map(e=>eventBtn(e,isCombined)).join('')}</div>${extra.length?`<div class="stack-extra">${extra.map(e=>eventBtn(e,isCombined)).join('')}</div>`:''}${more>0?`<div class="more">+ ${more} autre(s)</div>`:''}`:'<div class="empty">Aucun rendez-vous</div>'}</div></article>`; }
 function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthMatrix(d.getFullYear(),d.getMonth()), today=dateVal(new Date()), person=getPerson(personId); const events=getFilteredEvents(); return `${renderDashboard(personId)}${renderFocusStrip(events.filter(e=>e.ownerId===personId),false,personId)}<section class="card calendar-shell"><div class="view-title"><h2>${esc(person?person.name:'Calendrier')}</h2><p>Vue mensuelle de cette personne.</p></div><div class="weekdays">${weekdayNames.map(w=>`<div class="weekday">${w}</div>`).join('')}</div><div class="grid">${matrix.map(day=>dayCell(day,today,events.filter(e=>e.ownerId===personId && e.date===dateVal(day.date)),false,personId)).join('')}</div></section>`; }
@@ -792,26 +800,12 @@ function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthM
   }, 2600);
 }
 
-function bindFocusStripScroll(){
-  const wrap = document.querySelector('[data-focus-strip-wrap]');
-  if(!wrap || wrap.dataset.scrollBound==='1') return;
-  wrap.dataset.scrollBound='1';
-  const getMaxLeft = () => Math.max(0, wrap.scrollWidth - wrap.clientWidth);
-  wrap.addEventListener('wheel', e => {
-    if(wrap.scrollWidth <= wrap.clientWidth + 2) return;
-    const mostlyVertical = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
-    const delta = mostlyVertical ? e.deltaY : e.deltaX;
-    if(Math.abs(delta) < 1) return;
-    const current = wrap.scrollLeft;
-    const next = Math.max(0, Math.min(getMaxLeft(), current + delta));
-    if(Math.abs(next - current) < 0.5) return;
-    e.preventDefault();
-    wrap.scrollLeft = next;
-  }, { passive:false });
+function bindSmoothStripScroll(){
+  return;
 }
 
  function bindDynamic(){
-  bindFocusStripScroll();
+  bindSmoothStripScroll();
   document.querySelectorAll('[data-add-date]').forEach(btn=>btn.addEventListener('click',()=>{ closeQuickMenu(); openEvent({id:'',ownerId:btn.getAttribute('data-owner'),date:btn.getAttribute('data-add-date'),type:'Autre',label:'',time:'09:00',duration:30,location:'',notes:''}); }));
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',e=>{
     if(dragState && dragState.moved) return;
@@ -821,7 +815,7 @@ function bindFocusStripScroll(){
     btn.addEventListener('dragstart',e=>e.preventDefault());
     btn.addEventListener('mousedown',startMouseDrag);
   });
-  document.querySelectorAll('.day[data-day-date]').forEach(day=>{
+  document.querySelectorAll('.calendar-shell .day[data-day-date]').forEach(day=>{
     if(day.classList.contains('outside')) return;
     day.addEventListener('dblclick', handleDayDoubleClick);
     day.addEventListener('mouseenter',()=>{
