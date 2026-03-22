@@ -1,0 +1,30 @@
+{
+  "errors": [],
+  "focusCardCount": 31,
+  "focusHover": {
+    "beforeHeight": 240,
+    "afterHeight": 272,
+    "grew": true,
+    "beforeY": 1137.1875,
+    "afterY": 960.1875
+  },
+  "focusScroll": {
+    "before": {
+      "left": 0,
+      "width": 1354,
+      "total": 11584
+    },
+    "after": {
+      "left": 700,
+      "width": 1354,
+      "total": 11584
+    },
+    "changed": true
+  },
+  "monthHover": {
+    "beforeHeight": 150,
+    "afterHeight": 150,
+    "grew": false
+  },
+  "theme": "serious"
+}

@@ -1,0 +1,19 @@
+{
+  "theme": "mangacatsblue",
+  "focusHoverGrow": true,
+  "focusScrollChanged": true,
+  "before": {
+    "x": -3707,
+    "y": 1197.984375,
+    "width": 360,
+    "height": 240
+  },
+  "after": {
+    "x": 540,
+    "y": 959.984375,
+    "width": 360,
+    "height": 272
+  },
+  "scrollBefore": 3245,
+  "scrollAfter": 3745
+}

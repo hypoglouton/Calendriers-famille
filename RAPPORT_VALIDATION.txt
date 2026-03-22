@@ -1,0 +1,46 @@
+Refactor calendrier - rapport de validation
+
+Fichiers livrés
+- index.html
+- style.css
+- script.js
+
+Objectif appliqué
+- séparation du monolithe en 3 fichiers
+- vue resserrée découplée de la vue mensuelle
+- focus cards générées comme .focus-card, sans recycler directement les mêmes cartes .day
+- listeners hover/défilement séparés pour la vue resserrée
+- scroll horizontal gardé natif sur la vue resserrée
+
+Correctifs structurels
+- renderFocusStrip() n'injecte plus des .day maquillées en focus cards
+- ajout de focusCardCell()
+- ajout de bindCardInteractions() pour brancher les interactions de manière propre
+- sélecteurs JS étendus pour accepter .focus-card là où c'est utile
+- CSS étendu pour donner à .focus-card sa propre surface interactive tout en conservant le rendu attendu
+
+Validation automatisée effectuée
+1. Exécution navigateur headless avec HTML/CSS/JS injectés inline
+2. Contrôle d'absence d'erreur JS au chargement
+3. Vérification du nombre de cartes focus générées
+4. Test hover sur une focus-card
+5. Test défilement horizontal de la vue resserrée à la molette
+6. Test sous le thème mangacatsblue
+7. Vérification syntaxique de script.js avec node --check
+
+Résultats principaux
+- erreurs JS au chargement: 0
+- nombre de focus cards détectées: 31
+- hover focus: hauteur 240 -> 272 | croissance visible: True
+- scroll focus: 0 -> 700 | défilement détecté: True
+- thème testé: mangacatsblue
+- hover focus sous mangacatsblue: True
+- scroll focus sous mangacatsblue: True
+
+Limite connue
+- le test auto montre surtout la vue resserrée, qui était le point le plus fragile. La croissance visible d'une case mensuelle dépend du contenu réel de la case; une case avec peu ou pas d'événements peut ne pas gagner de hauteur visible, même si le hover reste actif.
+
+Recommandation GitHub
+- remplacer ton index.html actuel par celui du dossier livré
+- ajouter style.css et script.js à la racine du repo
+- ne pas garder l'ancien index monolithique en parallèle
