@@ -70,8 +70,10 @@ select option{color:#0b1730;background:#ffffff}
 .quick-added-event-highlight{box-shadow:0 0 0 2px rgba(93,255,212,.36),0 14px 30px rgba(0,0,0,.22);transform:translateY(-1px)}
 @keyframes quickDayPulse{0%{box-shadow:0 0 0 0 rgba(93,255,212,.34),0 18px 34px rgba(0,0,0,.24)}50%{box-shadow:0 0 0 8px rgba(93,255,212,0),0 20px 38px rgba(0,0,0,.26)}100%{box-shadow:0 0 0 0 rgba(93,255,212,0),0 18px 34px rgba(0,0,0,.24)}}
 .day:hover .empty,.day.day-hover-visible .empty,.day.day-expand-active .empty,.focus-card:hover .empty,.focus-card.day-hover-visible .empty,.focus-card.day-expand-active .empty{opacity:.5}
-.day.outside{opacity:.38}
+.day.outside{opacity:.5;filter:saturate(.78);border-style:dashed;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03))}
 .day.today,.focus-card.today{outline:2px solid rgba(93,255,212,.45);box-shadow:0 0 0 1px rgba(93,255,212,.15) inset}
+.month-link-highlight{border-color:rgba(93,255,212,.78) !important;box-shadow:0 0 0 2px rgba(93,255,212,.28) inset,0 18px 34px rgba(0,0,0,.24),0 0 28px rgba(93,255,212,.18) !important;animation:monthLinkPulse 1.05s ease-in-out 2;z-index:7}
+@keyframes monthLinkPulse{0%{box-shadow:0 0 0 0 rgba(93,255,212,.35),0 18px 34px rgba(0,0,0,.24)}50%{box-shadow:0 0 0 10px rgba(93,255,212,0),0 20px 38px rgba(0,0,0,.26)}100%{box-shadow:0 0 0 0 rgba(93,255,212,0),0 18px 34px rgba(0,0,0,.24)}}
 .day-hover-card{position:absolute;left:8px;right:8px;top:44px;bottom:8px;padding:12px 12px;border-radius:16px;background:linear-gradient(180deg,rgba(4,10,22,.96),rgba(8,18,36,.94));border:1px solid rgba(255,255,255,.18);box-shadow:0 18px 34px rgba(0,0,0,.34);opacity:0;transform:translateY(8px) scale(.985);transition:opacity .16s ease,transform .16s ease;pointer-events:none;z-index:5;display:flex;flex-direction:column;justify-content:flex-start}
 .day:hover .day-hover-card,.day.day-hover-visible .day-hover-card,.focus-card:hover .day-hover-card,.focus-card.day-hover-visible .day-hover-card{opacity:1;transform:translateY(0) scale(1)}
 .day.day-hover-visible,.focus-card.day-hover-visible{border-color:rgba(255,255,255,.38);box-shadow:0 18px 34px rgba(0,0,0,.24),0 0 0 1px rgba(255,255,255,.10) inset;background:linear-gradient(180deg,rgba(255,255,255,.19),rgba(255,255,255,.09))}
@@ -82,7 +84,12 @@ select option{color:#0b1730;background:#ffffff}
 .day-hover-card .hover-owners{font-size:12px;color:#bdd0f7;margin-top:8px}
 .day.outside .day-hover-card{display:none}
 .day-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.day-date-pack{display:flex;align-items:center;gap:8px;min-width:0}
 .day-number{font-size:22px;font-weight:700}
+.day-month{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;font-size:11px;line-height:1;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--muted)}
+.day-month-current{opacity:.82}
+.day-month-outside{background:rgba(255,184,107,.12);border-color:rgba(255,184,107,.22);color:#ffd7a5}
+.day.outside .day-number{opacity:.78}
 .add-mini{width:34px;height:34px;padding:0;border-radius:12px;background:rgba(255,255,255,.08)}
 .stack{display:flex;flex-direction:column;gap:7px;position:relative}
 .stack-primary{display:flex;flex-direction:column;gap:7px}
@@ -241,6 +248,7 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 .focus-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
 .focus-head h2{margin:0 0 6px;font-size:28px}
 .focus-head p{margin:0;color:var(--muted)}
+.focus-jump-note{margin-top:8px !important;font-size:13px;color:#9fe9ff !important}
 .focus-meta{display:flex;gap:10px;flex-wrap:wrap}
 .focus-badge{display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#dfe9ff;font-size:13px}
 .focus-strip-wrap{overflow-x:auto;overflow-y:visible;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;overscroll-behavior-x:contain;scroll-padding-inline:28px;-webkit-overflow-scrolling:touch;touch-action:pan-x}
@@ -314,6 +322,7 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 .focus-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
 .focus-head h2{margin:0 0 6px;font-size:28px}
 .focus-head p{margin:0;color:var(--muted)}
+.focus-jump-note{margin-top:8px !important;font-size:13px;color:#9fe9ff !important}
 .focus-meta{display:flex;gap:10px;flex-wrap:wrap}
 .focus-badge{display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#dfe9ff;font-size:13px}
 .focus-strip-wrap{overflow-x:auto;overflow-y:visible;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;overscroll-behavior-x:contain;scroll-padding-inline:28px;-webkit-overflow-scrolling:touch;touch-action:pan-x}

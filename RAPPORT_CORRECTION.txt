@@ -1,0 +1,22 @@
+Correction appliquée : confusion entre vue resserrée et vue mensuelle
+
+Diagnostic
+- Le rendez-vous de la vue resserrée n'était pas absent des données.
+- Le problème venait du fait que mars 2026 commence un dimanche.
+- La première ligne de la vue mensuelle affiche donc les jours du mois précédent : 23, 24, 25, 26, 27, 28 février.
+- En haut, la vue resserrée affichait bien 23 mars.
+- Comme seul le numéro du jour était très visible, on pouvait croire qu'il s'agissait du même 23.
+
+Correctifs appliqués
+1. Les cases du calendrier mensuel affichent maintenant aussi un badge de mois.
+2. Les jours hors mois courant sont plus nettement différenciés visuellement.
+3. Un clic sur une case de la vue resserrée fait défiler vers la case correspondante dans la vue mensuelle et la surligne temporairement.
+4. Chaque case porte aussi un title/aria-label avec la date complète.
+
+Vérifications réalisées
+- Validation syntaxique JS : OK via node --check.
+- Vérification logique du cas mars 2026 : la première ligne du mois contient bien février 2026.
+- Vérification statique du code : le saut focus -> mensuel cible bien .calendar-shell .day[data-day-date="ISO"]:not(.outside).
+
+Limite
+- Cette correction traite la vraie source du problème observé sur la capture : une ambiguïté visuelle et de navigation, pas une divergence de données.
