@@ -266,13 +266,66 @@ function formatMonthShort(input){
 function getPerson(id){ return state.people.find(p=>p.id===id); }
 function startOfWeek(d){ const x=new Date(d); const day=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day); return x; }
 function endOfWeek(d){ const x=startOfWeek(d); x.setDate(x.getDate()+6); x.setHours(23,59,59,999); return x; }
-function computeDashboard(targetOwnerId){ const events=getFilteredEvents().filter(e=>!targetOwnerId || e.ownerId===targetOwnerId); const now=new Date(); const todayStr=dateVal(now); const weekStart=startOfWeek(now), weekEnd=endOfWeek(now); const todayCount=events.filter(e=>e.date===todayStr).length; const weekCount=events.filter(e=>{ const d=new Date(e.date+'T12:00:00'); return d>=weekStart && d<=weekEnd; }).length; const upcoming=events.find(e=>new Date(`${e.date}T${e.time}:00`) >= now); const byDay={}; events.forEach(e=>{byDay[e.date]=(byDay[e.date]||0)+1;}); let busiestDate=''; let busiestCount=0; Object.keys(byDay).sort().forEach(date=>{ const count=byDay[date]; if(count>busiestCount){ busiestCount=count; busiestDate=date; } }); const byPerson={}; events.forEach(e=>{byPerson[e.ownerId]=(byPerson[e.ownerId]||0)+1;}); let topPerson=null; Object.keys(byPerson).forEach(id=>{ if(!topPerson || byPerson[id]>topPerson.count) topPerson={id:id,count:byPerson[id]}; }); return {events,todayCount,weekCount,upcoming,busiestDate,busiestCount,topPerson}; }
-function renderDashboard(targetOwnerId){ const stats=computeDashboard(targetOwnerId); const owner=targetOwnerId?getPerson(targetOwnerId):null; const title=owner?`Tableau de bord — ${esc(owner.name)}`:'Tableau de bord famille'; const subtitle=owner?'Résumé immédiat du mois affiché pour cette personne.':'Vue synthétique immédiate du mois en cours pour toute la famille.'; const topPersonLabel=owner?esc(owner.name):(stats.topPerson?esc((getPerson(stats.topPerson.id)||{}).name||'—'):'—'); const topPersonMeta=owner?`${stats.events.length} rendez-vous ce mois`:(stats.topPerson?`${stats.topPerson.count} rendez-vous ce mois`:'Aucun rendez-vous'); return `<section class="card dashboard"><div class="legend" style="margin-bottom:12px"><span class="pill">TABLEAU DE BORD</span></div><div class="dashboard-head"><div><h2>${title}</h2><p>${subtitle}</p></div><div class="legend">${targetOwnerId?`<span class="item ${owner?owner.color:'tone-1'}"><span class="dot"></span>${owner?esc(owner.name):'—'}</span>`:state.people.map(p=>`<span class="item ${p.color}"><span class="dot"></span>${esc(p.name)}</span>`).join('')}</div></div><div class="dashboard-cards"><article class="dashboard-card accent"><span class="label">Aujourd'hui</span><span class="value">${stats.todayCount}</span><span class="meta">Rendez-vous prévus aujourd'hui</span></article><article class="dashboard-card success"><span class="label">Cette semaine</span><span class="value">${stats.weekCount}</span><span class="meta">Rendez-vous de lundi à dimanche</span></article><article class="dashboard-card warn"><span class="label">Prochain rendez-vous</span><span class="value">${stats.upcoming?esc(stats.upcoming.time):'—'}</span><span class="meta">${stats.upcoming?`${formatDateFr(stats.upcoming.date,true)} — ${esc(stats.upcoming.label)}`:'Aucun rendez-vous à venir'}</span></article><article class="dashboard-card info"><span class="label">${owner?'Mois en cours':'Personne la plus occupée'}</span><span class="value">${topPersonLabel}</span><span class="meta">${owner?`${stats.events.length} rendez-vous ce mois`:topPersonMeta}</span></article></div>${stats.busiestDate?`<div class="legend" style="margin-top:14px"><span class="pill">Journée la plus chargée : ${formatDateFr(stats.busiestDate,true)} · ${stats.busiestCount} RDV</span></div>`:''}</section>`; }
+
+function getSearchQuery(){ return ($('searchInput').value||'').trim().toLowerCase(); }
+function getMonthEvents(options={}){
+  const { ownerId=null, respectSearch=true } = options;
+  const q = respectSearch ? getSearchQuery() : '';
+  const cur = monthDate(), y = cur.getFullYear(), m = cur.getMonth();
+  return state.events
+    .filter(e => !ownerId || e.ownerId === ownerId)
+    .filter(e => {
+      const d = new Date(e.date+'T12:00:00');
+      if(d.getFullYear() !== y || d.getMonth() !== m) return false;
+      if(!q) return true;
+      const owner = (getPerson(e.ownerId)||{}).name || '';
+      return [e.label,e.type,e.location,e.notes,owner,e.time].join(' ').toLowerCase().includes(q);
+    })
+    .sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`));
+}
+function buildOwnerOptions(selectedId){
+  return state.people.map(p => `<option value="${p.id}" ${String(selectedId)===String(p.id)?'selected':''}>${esc(p.name)}</option>`).join('');
+}
+function syncEventOwnerField(selectedId){
+  const field = $('eventOwnerField');
+  const select = $('eventOwnerSelect');
+  if(!field || !select) return;
+  select.innerHTML = buildOwnerOptions(selectedId || state.people[0].id);
+  select.value = selectedId || state.people[0].id;
+  field.classList.toggle('hidden', state.people.length <= 1 && state.activeTab !== 'all');
+}
+
+function computeDashboard(targetOwnerId){
+  const events = getMonthEvents({ ownerId: targetOwnerId || null, respectSearch:false });
+  const now = new Date();
+  const todayStr = dateVal(now);
+  const weekStart = startOfWeek(now), weekEnd = endOfWeek(now);
+  const todayCount = events.filter(e => e.date===todayStr).length;
+  const weekCount = events.filter(e => { const d = new Date(e.date+'T12:00:00'); return d>=weekStart && d<=weekEnd; }).length;
+  const upcoming = events.find(e => new Date(`${e.date}T${e.time}:00`) >= now);
+  const byDay = {};
+  events.forEach(e => { byDay[e.date] = (byDay[e.date]||0)+1; });
+  let busiestDate = '', busiestCount = 0;
+  Object.keys(byDay).sort().forEach(date => { if(byDay[date] > busiestCount){ busiestDate = date; busiestCount = byDay[date]; } });
+  const byPerson = {};
+  events.forEach(e => { byPerson[e.ownerId] = (byPerson[e.ownerId]||0)+1; });
+  let topPerson = null;
+  Object.keys(byPerson).forEach(id => { if(!topPerson || byPerson[id] > topPerson.count) topPerson = { id, count: byPerson[id] }; });
+  return { events, todayCount, weekCount, upcoming, busiestDate, busiestCount, topPerson };
+}
+function renderDashboard(targetOwnerId){
+  const stats=computeDashboard(targetOwnerId);
+  const owner=targetOwnerId?getPerson(targetOwnerId):null;
+  const title=owner?`Tableau de bord — ${esc(owner.name)}`:'Tableau de bord famille';
+  const subtitle=owner?'Résumé immédiat du mois affiché pour cette personne.':'Vue synthétique immédiate du mois affiché pour toute la famille.';
+  const topPersonLabel=owner?esc(owner.name):(stats.topPerson?esc((getPerson(stats.topPerson.id)||{}).name||'—'):'—');
+  const topPersonMeta=owner?`${stats.events.length} rendez-vous dans le mois affiché`:(stats.topPerson?`${stats.topPerson.count} rendez-vous dans le mois affiché`:'Aucun rendez-vous');
+  return `<section class="card dashboard"><div class="legend" style="margin-bottom:12px"><span class="pill">TABLEAU DE BORD</span></div><div class="dashboard-head"><div><h2>${title}</h2><p>${subtitle}</p></div><div class="legend">${targetOwnerId?`<span class="item ${owner?owner.color:'tone-1'}"><span class="dot"></span>${owner?esc(owner.name):'—'}</span>`:state.people.map(p=>`<span class="item ${p.color}"><span class="dot"></span>${esc(p.name)}</span>`).join('')}</div></div><div class="dashboard-cards"><article class="dashboard-card accent"><span class="label">Aujourd'hui</span><span class="value">${stats.todayCount}</span><span class="meta">Rendez-vous prévus aujourd'hui</span></article><article class="dashboard-card success"><span class="label">Cette semaine</span><span class="value">${stats.weekCount}</span><span class="meta">Rendez-vous de lundi à dimanche</span></article><article class="dashboard-card warn"><span class="label">Prochain rendez-vous</span><span class="value">${stats.upcoming?esc(stats.upcoming.time):'—'}</span><span class="meta">${stats.upcoming?`${formatDateFr(stats.upcoming.date,true)} — ${esc(stats.upcoming.label)}`:'Aucun rendez-vous à venir'}</span></article><article class="dashboard-card info"><span class="label">${owner?'Mois affiché':'Personne la plus occupée'}</span><span class="value">${topPersonLabel}</span><span class="meta">${owner?`${stats.events.length} rendez-vous dans le mois affiché`:topPersonMeta}</span></article></div>${stats.busiestDate?`<div class="legend" style="margin-top:14px"><span class="pill">Journée la plus chargée : ${formatDateFr(stats.busiestDate,true)} · ${stats.busiestCount} RDV</span></div>`:''}</section>`;
+}
 function getFilteredEvents(){
-  const q = ($('searchInput').value||'').trim().toLowerCase();
-  const cur=monthDate(), y=cur.getFullYear(), m=cur.getMonth();
-  return state.events.filter(e=>state.activeTab==='all' || e.ownerId===state.activeTab).filter(e=>{ const d=new Date(e.date+'T12:00:00'); if(d.getFullYear()!==y || d.getMonth()!==m) return false; if(!q) return true; const owner=(getPerson(e.ownerId)||{}).name||''; return [e.label,e.type,e.location,e.notes,owner,e.time].join(' ').toLowerCase().includes(q); }).sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`));
+  return getMonthEvents({ ownerId: state.activeTab==='all' ? null : state.activeTab, respectSearch:true });
  }
+
  function buildMonthMatrix(year,month){ const first=new Date(year,month,1); const firstDay=(first.getDay()+6)%7; const start=new Date(year,month,1-firstDay); const out=[]; for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); out.push({date:d,currentMonth:d.getMonth()===month}); } return out; }
  function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); const meta=themeMeta[state.theme]; $('themeBadge').textContent=meta.badge; $('heroTitle').textContent=meta.title; $('heroSubtitle').textContent=meta.subtitle; $('themeSelect').value=state.theme; }
  function renderTabs(){ const personTabs = state.people.map(p=>`<button class="tab ${state.activeTab===p.id?'active':''}" data-tab="${p.id}">${esc(p.name)}</button>`).join(''); const totalTab = `<button class="tab ${state.activeTab==='all'?'active':''}" data-tab="all">Total</button>`; $('tabsBar').innerHTML = personTabs + totalTab; document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{ state.activeTab=btn.getAttribute('data-tab'); saveState(); render(); })); }
@@ -288,43 +341,50 @@ function getFocusAnchorDate(){
   if(current.getMonth()===shownMonth && current.getFullYear()===shownYear) return dateVal(current);
   return dateVal(new Date(shownYear, shownMonth, 1));
 }
-function focusCardCell(day,today,events,isCombined,ownerId,isAnchor){
-  const markup = dayCell(day,today,events,isCombined,ownerId);
-  return markup.replace('<article class="day ', `<article class="focus-card ${isAnchor?'focus-anchor ':''}`);
+
+function getFocusRange(anchorIso, beforeCount=5, afterCount=7){
+  const anchor = new Date(anchorIso+'T12:00:00');
+  const start = new Date(anchor);
+  start.setDate(start.getDate() - beforeCount);
+  const out = [];
+  for(let i=0;i<beforeCount+afterCount+1;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    out.push(d);
+  }
+  return out;
 }
 function renderFocusStrip(events,isCombined,ownerId){
   const shown = monthDate();
-  const year = shown.getFullYear(), month = shown.getMonth();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
   const anchorDate = getFocusAnchorDate();
-  const anchorDay = new Date(anchorDate + 'T12:00:00').getDate();
-  const cards = [];
-  for(let dayNum=1; dayNum<=daysInMonth; dayNum++){
-    const dayDate = new Date(year, month, dayNum);
+  const range = getFocusRange(anchorDate, 5, 7);
+  const todayIso = dateVal(new Date());
+  const anchorIsToday = anchorDate === todayIso;
+  const cards = range.map(dayDate => {
     const iso = dateVal(dayDate);
-    const dayEvents = events.filter(e=>e.date===iso && (isCombined || e.ownerId===ownerId));
-    cards.push(focusCardCell({date:dayDate,currentMonth:true}, anchorDate, dayEvents, isCombined, ownerId, dayNum===anchorDay));
-  }
-  return `<section class="card focus-shell"><div class="focus-head"><div><h2>Vue resserrée autour d'aujourd'hui</h2><p>Grandes cases horizontales, centrées autour de la date du jour. Tu gardes la vue mensuelle en dessous, mais ici tu lis beaucoup plus facilement la période proche.</p><p class="focus-jump-note">Astuce : clique sur une case de cette vue pour retrouver le même jour dans le calendrier mensuel.</p></div><div class="focus-meta"><span class="focus-badge">5 jours avant</span><span class="focus-badge">Jour repère : ${formatDateFr(anchorDate,true)}</span><span class="focus-badge">7 jours après</span></div></div><div class="focus-strip-wrap" data-focus-strip-wrap="1"><div class="focus-strip" data-focus-strip="1">${cards.join('')}</div></div></section>`;
+    const dayEvents = events.filter(e => e.date===iso && (isCombined || e.ownerId===ownerId));
+    return dayCell({ date: dayDate, currentMonth: dayDate.getMonth()===shown.getMonth() && dayDate.getFullYear()===shown.getFullYear() }, todayIso, dayEvents, isCombined, ownerId, { variant:'focus', isAnchor: iso===anchorDate });
+  });
+  const title = anchorIsToday ? "Vue resserrée autour d'aujourd'hui" : `Vue resserrée autour du ${formatDateFr(anchorDate, true)}`;
+  const subtitle = anchorIsToday
+    ? "Grandes cases horizontales sur 13 jours, centrées autour de la date du jour. Tu gardes la vue mensuelle en dessous, mais ici tu lis beaucoup plus facilement la période proche."
+    : `Grandes cases horizontales sur 13 jours, centrées autour du jour repère ${formatDateFr(anchorDate,true)}.`;
+  return `<section class="card focus-shell"><div class="focus-head"><div><h2>${title}</h2><p>${subtitle}</p><p class="focus-jump-note">Astuce : clique sur une case de cette vue pour retrouver le même jour dans le calendrier mensuel.</p></div><div class="focus-meta"><span class="focus-badge">5 jours avant</span><span class="focus-badge">Jour repère : ${formatDateFr(anchorDate,true)}</span><span class="focus-badge">7 jours après</span></div></div><div class="focus-strip-wrap" data-focus-strip-wrap="1"><div class="focus-strip" data-focus-strip="1">${cards.join('')}</div></div></section>`;
 }
-function syncFocusStrip(){
-  const wrap = document.querySelector('[data-focus-strip-wrap]');
-  const anchor = document.querySelector('.focus-strip .focus-anchor, .focus-strip .today');
-  if(!wrap || !anchor) return;
-  const anchorCenter = anchor.offsetLeft + (anchor.offsetWidth / 2);
-  const preferredAnchorRatio = 5 / 12;
-  const target = Math.max(0, anchorCenter - (wrap.clientWidth * preferredAnchorRatio));
-  wrap.scrollLeft = target;
-}
-function dayCell(day,today,events,isCombined,ownerId){
-  const iso=dateVal(day.date), visibleCount=isCombined?4:3, sorted=[...events].sort((a,b)=>a.time.localeCompare(b.time)), primary=sorted.slice(0,visibleCount), extra=sorted.slice(visibleCount), more=extra.length, dayOwner=(ownerId||state.people[0].id), owners=isCombined?[...new Set(sorted.map(e=>(getPerson(e.ownerId)||{}).name).filter(Boolean))]:[], expandExtra=Math.min(Math.max(sorted.length-visibleCount,0)*64 + (sorted.length>visibleCount?22:0), 320);
+function dayCell(day,today,events,isCombined,ownerId,options={}){
+  const variant = options.variant || 'month';
+  const isFocus = variant === 'focus';
+  const iso=dateVal(day.date), visibleCount=isCombined?4:3, sorted=[...events].sort((a,b)=>a.time.localeCompare(b.time)), primary=sorted.slice(0,visibleCount), extra=sorted.slice(visibleCount), more=extra.length, dayOwner=(ownerId||''), owners=isCombined?[...new Set(sorted.map(e=>(getPerson(e.ownerId)||{}).name).filter(Boolean))]:[], expandExtra=Math.min(Math.max(sorted.length-visibleCount,0)*64 + (sorted.length>visibleCount?22:0), 320);
   const outsideMonth = !day.currentMonth;
   const dayTitle = formatDateFr(iso,false);
   const monthBadge = outsideMonth ? `<span class="day-month day-month-outside">${esc(formatMonthShort(day.date))}</span>` : `<span class="day-month day-month-current">${esc(formatMonthShort(day.date))}</span>`;
-  return `<article class="day ${outsideMonth?'outside':''} ${iso===today?'today':''}" data-day-date="${iso}" data-owner="${dayOwner}" data-combined="${isCombined?'1':'0'}" style="--expand-extra:${expandExtra}px" aria-label="${esc(dayTitle)}" title="${esc(dayTitle)}"><div class="day-head"><div class="day-date-pack"><span class="day-number">${day.date.getDate()}</span>${monthBadge}</div>${day.currentMonth?`<button class="add-mini" data-add-date="${iso}" data-owner="${dayOwner}">+</button>`:''}</div><div class="stack">${sorted.length?`<div class="stack-primary">${primary.map(e=>eventBtn(e,isCombined)).join('')}</div>${extra.length?`<div class="stack-extra">${extra.map(e=>eventBtn(e,isCombined)).join('')}</div>`:''}${more>0?`<div class="more">+ ${more} autre(s)</div>`:''}`:'<div class="empty">Aucun rendez-vous</div>'}</div></article>`;
+  const cardClass = `${isFocus?'focus-card':'day'} ${outsideMonth?'outside':''} ${iso===today?'today':''} ${options.isAnchor?'focus-anchor':''}`.trim();
+  const weekdayMini = isFocus ? `<span class="weekday-mini">${esc(new Intl.DateTimeFormat('fr-FR',{weekday:'long'}).format(day.date))}</span>` : '';
+  const addOwner = dayOwner;
+  return `<article class="${cardClass}" data-day-date="${iso}" data-owner="${addOwner}" data-combined="${isCombined?'1':'0'}" data-variant="${variant}" style="--expand-extra:${expandExtra}px" aria-label="${esc(dayTitle)}" title="${esc(dayTitle)}"><div class="day-head"><div class="day-date-pack">${weekdayMini}<span class="day-number">${day.date.getDate()}</span>${monthBadge}</div><button class="add-mini" data-add-date="${iso}" data-owner="${addOwner}">+</button></div><div class="stack">${sorted.length?`<div class="stack-primary">${primary.map(e=>eventBtn(e,isCombined)).join('')}</div>${extra.length?`<div class="stack-extra">${extra.map(e=>eventBtn(e,isCombined)).join('')}</div>`:''}${more>0?`<div class="more">+ ${more} autre(s)</div>`:''}`:`<div class="empty">Aucun rendez-vous</div>${isCombined && owners.length?`<div class="day-hover-card"><span class="pill">${owners.length} personne(s)</span><div style="margin-top:8px;color:var(--muted)">${owners.join(' · ')}</div></div>`:''}`}</div></article>`;
 }
-function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthMatrix(d.getFullYear(),d.getMonth()), today=dateVal(new Date()), person=getPerson(personId); const events=getFilteredEvents(); return `${renderDashboard(personId)}${renderFocusStrip(events.filter(e=>e.ownerId===personId),false,personId)}<section class="card calendar-shell"><div class="view-title"><h2>${esc(person?person.name:'Calendrier')}</h2><p>Vue mensuelle de cette personne.</p></div><div class="weekdays">${weekdayNames.map(w=>`<div class="weekday">${w}</div>`).join('')}</div><div class="grid">${matrix.map(day=>dayCell(day,today,events.filter(e=>e.ownerId===personId && e.date===dateVal(day.date)),false,personId)).join('')}</div></section>`; }
- function renderCombined(){ const d=monthDate(), matrix=buildMonthMatrix(d.getFullYear(),d.getMonth()), today=dateVal(new Date()), events=getFilteredEvents(); const groups={}; events.forEach(e=>((groups[e.date]=groups[e.date]||[]).push(e))); const peopleCount=new Set(events.map(e=>e.ownerId)).size; const next=events.find(e=>`${e.date}T${e.time}` >= new Date().toISOString().slice(0,16)); const familyCols = state.people.map(p=>{ const personEvents = events.filter(e=>e.ownerId===p.id).sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); return `<section class="family-col card ${p.color}"><div class="family-col-head"><span class="item ${p.color}"><span class="dot"></span>${esc(p.name)}</span><strong>${personEvents.length} RDV</strong></div><div class="family-col-body">${personEvents.length ? personEvents.map(e=>{ const subtitle=(e.label&&e.label.trim())?e.label.trim():'Sans titre'; const untitled=!(e.label&&e.label.trim()); return `<button class="family-event ${typeClass(getEventType(e))}" data-edit="${e.id}"><div class="family-event-top"><span class="agenda-type ${typeClass(getEventType(e))}">${typeIcon(getEventType(e))} ${esc(getEventType(e))}</span><time>${formatDateFr(e.date,true)} · ${esc(e.time)}</time></div><div class="family-event-title">${typeIcon(getEventType(e))} ${esc(getEventType(e))}</div><div class="family-event-subtitle ${untitled?'untitled':''}">${esc(subtitle)}</div><div class="family-event-meta">${esc([e.location,e.notes].filter(Boolean).join(' — ')||'—')}</div></button>`; }).join('') : '<div class="empty">Aucun rendez-vous ce mois-ci.</div>'}</div></section>`; }).join(''); return `${renderDashboard(null)}${renderFocusStrip(events,true,'')}<section class="card agenda-shell" style="margin-top:16px"><div class="view-title"><h2>Vue famille côte à côte</h2><p>Chaque colonne affiche les rendez-vous du mois pour une personne. Clic sur un rendez-vous pour le modifier.</p></div><div class="family-board">${familyCols}</div></section><section class="card calendar-shell" style="margin-top:16px"><div class="weekdays">${weekdayNames.map(w=>`<div class="weekday">${w}</div>`).join('')}</div><div class="grid">${matrix.map(day=>dayCell(day,today,events.filter(e=>e.date===dateVal(day.date)),true,'')).join('')}</div></section><section class="card agenda-shell" style="margin-top:16px"><div class="agenda-list">${Object.keys(groups).length?Object.keys(groups).sort().map(date=>`<section class="agenda-day"><div class="agenda-headline"><div>${formatDateFr(date,false)}</div><div>${groups[date].length} rendez-vous</div></div><div class="table-wrap"><table><thead><tr><th>Heure</th><th>Personne</th><th>Rendez-vous</th><th>Lieu / notes</th><th>Action</th></tr></thead><tbody>${groups[date].sort((a,b)=>a.time.localeCompare(b.time)).map(e=>{ const p=getPerson(e.ownerId)||{name:'Sans nom',color:'tone-1'}; const subtitle=(e.label&&e.label.trim())?e.label.trim():'Sans titre'; const untitled=!(e.label&&e.label.trim()); return `<tr><td>${esc(e.time)}</td><td><span class="item ${p.color}"><span class="dot"></span>${esc(p.name)}</span></td><td><span class="agenda-type ${typeClass(getEventType(e))}">${typeIcon(getEventType(e))} ${esc(getEventType(e))}</span><div style="margin-top:6px;font-size:12px;color:var(--muted);${untitled?'font-style:italic;':''}">${esc(subtitle)}</div></td><td>${esc([e.location,e.notes].filter(Boolean).join(' — ')||'—')}</td><td><button class="ghost" data-edit="${e.id}">Modifier</button></td></tr>`; }).join('')}</tbody></table></div></section>`).join(''):'<div class="empty">Aucun rendez-vous pour les filtres actuels.</div>'}</div></section>`; }
+function renderPersonCalendar(personId){ const d=monthDate(), matrix=buildMonthMatrix(d.getFullYear(),d.getMonth()), today=dateVal(new Date()), person=getPerson(personId); const events=getMonthEvents({ ownerId: personId, respectSearch:true }); return `${renderDashboard(personId)}${renderFocusStrip(events,false,personId)}<section class="card calendar-shell"><div class="view-title"><h2>${esc(person?person.name:'Calendrier')}</h2><p>Vue mensuelle de cette personne.</p></div><div class="weekdays">${weekdayNames.map(w=>`<div class="weekday">${w}</div>`).join('')}</div><div class="grid">${matrix.map(day=>dayCell(day,today,events.filter(e=>e.date===dateVal(day.date)),false,personId)).join('')}</div></section>`; }
+function renderCombined(){ const d=monthDate(), matrix=buildMonthMatrix(d.getFullYear(),d.getMonth()), today=dateVal(new Date()), events=getMonthEvents({ respectSearch:true }); const groups={}; events.forEach(e=>((groups[e.date]=groups[e.date]||[]).push(e))); const familyCols = state.people.map(p=>{ const personEvents = events.filter(e=>e.ownerId===p.id).sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); return `<section class="family-col card ${p.color}"><div class="family-col-head"><span class="item ${p.color}"><span class="dot"></span>${esc(p.name)}</span><strong>${personEvents.length} RDV</strong></div><div class="family-col-body">${personEvents.length ? personEvents.map(e=>{ const subtitle=(e.label&&e.label.trim())?e.label.trim():'Sans titre'; const untitled=!(e.label&&e.label.trim()); return `<button class="family-event ${typeClass(getEventType(e))}" data-edit="${e.id}"><div class="family-event-top"><span class="agenda-type ${typeClass(getEventType(e))}">${typeIcon(getEventType(e))} ${esc(getEventType(e))}</span><time>${formatDateFr(e.date,true)} · ${esc(e.time)}</time></div><div class="family-event-title">${typeIcon(getEventType(e))} ${esc(getEventType(e))}</div><div class="family-event-subtitle ${untitled?'untitled':''}">${esc(subtitle)}</div><div class="family-event-meta">${esc([e.location,e.notes].filter(Boolean).join(' — ')||'—')}</div></button>`; }).join('') : '<div class="empty">Aucun rendez-vous ce mois-ci.</div>'}</div></section>`; }).join(''); return `${renderDashboard(null)}${renderFocusStrip(events,true,'')}<section class="card agenda-shell" style="margin-top:16px"><div class="view-title"><h2>Vue famille côte à côte</h2><p>Chaque colonne affiche les rendez-vous du mois pour une personne. Clic sur un rendez-vous pour le modifier.</p></div><div class="family-board">${familyCols}</div></section><section class="card calendar-shell" style="margin-top:16px"><div class="weekdays">${weekdayNames.map(w=>`<div class="weekday">${w}</div>`).join('')}</div><div class="grid">${matrix.map(day=>dayCell(day,today,events.filter(e=>e.date===dateVal(day.date)),true,'')).join('')}</div></section><section class="card agenda-shell" style="margin-top:16px"><div class="agenda-list">${Object.keys(groups).length?Object.keys(groups).sort().map(date=>`<section class="agenda-day"><div class="agenda-headline"><div>${formatDateFr(date,false)}</div><div>${groups[date].length} rendez-vous</div></div><div class="table-wrap"><table><thead><tr><th>Heure</th><th>Personne</th><th>Rendez-vous</th><th>Lieu / notes</th><th>Action</th></tr></thead><tbody>${groups[date].sort((a,b)=>a.time.localeCompare(b.time)).map(e=>{ const p=getPerson(e.ownerId)||{name:'Sans nom',color:'tone-1'}; const subtitle=(e.label&&e.label.trim())?e.label.trim():'Sans titre'; const untitled=!(e.label&&e.label.trim()); return `<tr><td>${esc(e.time)}</td><td><span class="item ${p.color}"><span class="dot"></span>${esc(p.name)}</span></td><td><span class="agenda-type ${typeClass(getEventType(e))}">${typeIcon(getEventType(e))} ${esc(getEventType(e))}</span><div style="margin-top:6px;font-size:12px;color:var(--muted);${untitled?'font-style:italic;':''}">${esc(subtitle)}</div></td><td>${esc([e.location,e.notes].filter(Boolean).join(' — ')||'—')}</td><td><button class="ghost" data-edit="${e.id}">Modifier</button></td></tr>`; }).join('')}</tbody></table></div></section>`).join(''):'<div class="empty">Aucun rendez-vous pour les filtres actuels.</div>'}</div></section>`; }
  function handleDayDoubleClick(e){
   const day = e.currentTarget || e.target.closest('.day[data-day-date], .focus-card[data-day-date]');
   if(!day || day.classList.contains('outside')) return;
@@ -404,7 +464,14 @@ function bindSmoothStripScroll(){
 
  function jumpToMonthlyCell(iso){
   if(!iso) return;
-  const target = document.querySelector(`.calendar-shell .day[data-day-date="${iso}"]:not(.outside)`);
+  const targetMonth = new Date(iso+'T12:00:00');
+  const shown = monthDate();
+  if(targetMonth.getMonth() !== shown.getMonth() || targetMonth.getFullYear() !== shown.getFullYear()){
+    state.currentDate = iso;
+    saveState();
+    render();
+  }
+  const target = document.querySelector(`.calendar-shell .day[data-day-date="${iso}"]`);
   if(!target) return;
   target.classList.add('month-link-highlight');
   activateDayExpand(target);
@@ -439,7 +506,7 @@ function bindSmoothStripScroll(){
 
  function bindDynamic(){
   bindSmoothStripScroll();
-  document.querySelectorAll('[data-add-date]').forEach(btn=>btn.addEventListener('click',()=>{ closeQuickMenu(); openEvent({id:'',ownerId:btn.getAttribute('data-owner'),date:btn.getAttribute('data-add-date'),type:'Autre',label:'',time:'09:00',duration:30,location:'',notes:''}); }));
+  document.querySelectorAll('[data-add-date]').forEach(btn=>btn.addEventListener('click',()=>{ closeQuickMenu(); const ownerId = btn.getAttribute('data-owner') || state.people[0].id; openEvent({id:'',ownerId:ownerId,date:btn.getAttribute('data-add-date'),type:'Autre',label:'',time:'09:00',duration:30,location:'',notes:''}); }));
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',e=>{
     if(dragState && dragState.moved) return;
     const ev=state.events.find(x=>x.id===btn.getAttribute('data-edit')); if(ev) openEvent(ev);
@@ -567,8 +634,8 @@ function bindSmoothStripScroll(){
   });
  }
  function moveEventToDate(eventId,newDate,newOwnerId){ const ev=state.events.find(e=>e.id===eventId); if(!ev || !newDate) return; ev.date=newDate; if(newOwnerId && state.people.some(p=>p.id===newOwnerId)) ev.ownerId=newOwnerId; state.events.sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); saveState(); render(); }
- function openEvent(ev){ const type=getEventType(ev||{}); $('eventModalTitle').textContent = ev.id ? 'Modifier le rendez-vous' : 'Ajouter un rendez-vous'; $('eventId').value=ev.id||''; $('eventDate').value=ev.date||dateVal(new Date()); $('eventOwnerId').value=ev.ownerId||state.people[0].id; $('eventType').innerHTML=typeOptions(type); $('eventType').value=type; $('eventLabel').value=ev.label||''; $('eventTime').value=ev.time||'09:00'; $('eventDuration').value=String(ev.duration||30); $('eventLocation').value=ev.location||''; $('eventNotes').value=ev.notes||''; $('deleteEventBtn').classList.toggle('hidden', !ev.id); openModal('eventModal'); }
- function saveEvent(){ const rawLabel=$('eventLabel').value.trim(); const label=rawLabel||'Sans titre'; const payload={ id:$('eventId').value||safeId(), ownerId:$('eventOwnerId').value||state.people[0].id, date:$('eventDate').value||dateVal(new Date()), type:normalizeType($('eventType').value), label:label, time:$('eventTime').value||'09:00', duration:Number($('eventDuration').value)||30, location:$('eventLocation').value.trim(), notes:$('eventNotes').value.trim() }; const idx=state.events.findIndex(e=>e.id===payload.id); if(idx>=0) state.events[idx]=payload; else state.events.push(payload); state.events.sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); saveState(); closeModal('eventModal'); render(); }
+ function openEvent(ev){ const type=getEventType(ev||{}); const ownerId = ev.ownerId||state.people[0].id; $('eventModalTitle').textContent = ev.id ? 'Modifier le rendez-vous' : 'Ajouter un rendez-vous'; $('eventId').value=ev.id||''; $('eventDate').value=ev.date||dateVal(new Date()); $('eventOwnerId').value=ownerId; syncEventOwnerField(ownerId); $('eventType').innerHTML=typeOptions(type); $('eventType').value=type; $('eventLabel').value=ev.label||''; $('eventTime').value=ev.time||'09:00'; $('eventDuration').value=String(ev.duration||30); $('eventLocation').value=ev.location||''; $('eventNotes').value=ev.notes||''; $('deleteEventBtn').classList.toggle('hidden', !ev.id); openModal('eventModal'); }
+ function saveEvent(){ const rawLabel=$('eventLabel').value.trim(); const label=rawLabel||'Sans titre'; const ownerSelect = $('eventOwnerSelect'); const chosenOwner = (ownerSelect && ownerSelect.value) || $('eventOwnerId').value || state.people[0].id; const payload={ id:$('eventId').value||safeId(), ownerId:chosenOwner, date:$('eventDate').value||dateVal(new Date()), type:normalizeType($('eventType').value), label:label, time:$('eventTime').value||'09:00', duration:Number($('eventDuration').value)||30, location:$('eventLocation').value.trim(), notes:$('eventNotes').value.trim() }; const idx=state.events.findIndex(e=>e.id===payload.id); if(idx>=0) state.events[idx]=payload; else state.events.push(payload); state.events.sort((a,b)=>(`${a.date} ${a.time}`).localeCompare(`${b.date} ${b.time}`)); saveState(); closeModal('eventModal'); render(); }
  function deleteEvent(){ const id=$('eventId').value; if(!id) return; state.events = state.events.filter(e=>e.id!==id); saveState(); closeModal('eventModal'); render(); }
  function addPerson(){ const name=$('personNameInput').value.trim(); if(!name){ alert('Entre un nom.'); return; } const p={id:safeId(),name:name,color:palette[state.people.length%palette.length]}; state.people.push(p); state.activeTab=p.id; saveState(); $('personNameInput').value=''; closeModal('personModal'); render(); }
  function bindStatic(){ $('prevMonthBtn').addEventListener('click',()=>{ closeQuickMenu(); shiftMonth(-1); }); $('nextMonthBtn').addEventListener('click',()=>{ closeQuickMenu(); shiftMonth(1); }); $('todayBtn').addEventListener('click',()=>{ closeQuickMenu(); state.currentDate=dateVal(new Date()); saveState(); render(); }); $('searchInput').addEventListener('input',render); $('themeSelect').addEventListener('change',()=>{ closeQuickMenu(); state.theme=$('themeSelect').value; saveState(); render(); }); $('addPersonBtn').addEventListener('click',()=>openModal('personModal')); $('cancelPersonBtn').addEventListener('click',()=>closeModal('personModal')); $('savePersonBtn').addEventListener('click',addPerson); $('cancelEventBtn').addEventListener('click',()=>closeModal('eventModal')); $('saveEventBtn').addEventListener('click',saveEvent); $('deleteEventBtn').addEventListener('click',deleteEvent); $('quickEntryBtn').addEventListener('click', handleQuickEntry); $('quickEntryInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); handleQuickEntry(); } }); $('quickEntryInput').addEventListener('input', ()=>{ const status = $('quickEntryStatus'); if(status) delete status.dataset.locked; updateQuickEntryUi(); }); ['personModal','eventModal'].forEach(id=>$(id).addEventListener('click',e=>{ if(e.target.id===id) closeModal(id); })); document.addEventListener('click',e=>{ if((quickMenuDay || quickMenuNode) && !e.target.closest('.day-menu') && !e.target.closest('.day, .focus-card')) closeQuickMenu(); }); document.addEventListener('contextmenu',e=>{ const day=e.target.closest('.day[data-day-date], .focus-card[data-day-date]'); if(!day || day.classList.contains('outside') || e.target.closest('.day-menu') || e.target.closest('.add-mini')) return; e.preventDefault(); e.stopPropagation(); openQuickMenu(day); }); document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeQuickMenu(); }); }

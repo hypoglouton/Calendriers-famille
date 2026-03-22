@@ -354,3 +354,22 @@ th{color:#c9d6f0;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 .focus-card{overflow:visible;align-self:flex-start}
 .focus-card:hover,.focus-card.day-hover-visible,.focus-card.day-expand-active{min-height:var(--hover-target-height,272px);z-index:8}
 .focus-card .add-mini{display:inline-flex;align-items:center;justify-content:center}
+
+
+/* Correctifs finaux – vue resserrée et cohérence inter-vues */
+#eventOwnerField.hidden{display:none}
+.focus-shell{overflow:visible !important}
+.focus-strip-wrap{overflow-x:auto;overflow-y:visible;scroll-snap-type:none}
+.focus-strip{align-items:flex-start}
+.focus-card{scroll-snap-align:none;overflow:visible;cursor:pointer}
+.focus-card .day-head{align-items:flex-start}
+.focus-card .day-date-pack{align-items:flex-start}
+.focus-card .day-number{display:block}
+.focus-card .day-month{margin-top:4px}
+.focus-card .weekday-mini{text-transform:capitalize}
+.month-link-highlight{border-color:rgba(93,255,212,.72) !important;box-shadow:0 0 0 2px rgba(93,255,212,.25) inset,0 18px 34px rgba(0,0,0,.24),0 0 24px rgba(93,255,212,.16) !important}
+[data-theme="mangacats"] .focus-shell,
+[data-theme="mangacatsblue"] .focus-shell{overflow:visible !important}
+[data-theme="mangacats"] .focus-shell::after,
+[data-theme="mangacatsblue"] .focus-shell::after,
+[data-theme="mangacatsblue"] .focus-shell::before{pointer-events:none}

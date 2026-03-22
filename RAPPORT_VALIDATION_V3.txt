@@ -1,0 +1,27 @@
+Validation statique du correctif calendrier_refactor_clean_v3
+
+- OK : HTML contient </body>
+- OK : Champ personne dans la modale
+- OK : Helper getMonthEvents présent
+- OK : Vue resserrée 13 jours
+- OK : Dashboard découplé de la recherche
+- OK : Suppression du replace fragile focusCardCell
+- OK : Saut vers cellule mensuelle amélioré
+- OK : Override overflow chats
+
+Correctifs principaux appliqués :
+- fermeture HTML propre avec </body>
+- ajout du choix de la personne dans la modale événement
+- vue resserrée réellement limitée à 13 jours autour du jour repère
+- titre et texte de la vue resserrée rendus cohérents avec le comportement réel
+- dashboard calculé sur le mois affiché sans être faussé par la recherche texte
+- génération des cartes focus sans remplacement de chaîne fragile
+- saut de la vue resserrée vers la vue mensuelle renforcé
+- override final pour éviter le rognage dans les skins chats
+
+Contrôles effectués :
+- node --check sur script.js : OK
+- contrôle de présence des blocs HTML/CSS/JS clés : OK
+
+Limite :
+- le test navigateur automatisé a été tenté mais bloqué par les restrictions de cet environnement ; je ne prétends donc pas avoir une validation visuelle complète ici.
